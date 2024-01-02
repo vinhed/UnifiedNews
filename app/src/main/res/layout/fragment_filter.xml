@@ -4,19 +4,68 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/BackgroundColor"
     tools:context=".ui.filter.FilterFragment">
 
-    <TextView
-        android:id="@+id/text_dashboard"
+    <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:background="@color/BackgroundColor"
+                android:textColorHint="@color/TextColorPrimary"
+                app:boxBackgroundColor="@color/BackgroundColor"
+                app:helperTextTextColor="@color/TextColorPrimary"
+                app:hintTextColor="@color/TextColorPrimary"
+                app:placeholderTextColor="@color/TextColorPrimary"
+                app:prefixTextColor="@color/TextColorPrimary"
+                app:suffixTextColor="@color/TextColorPrimary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/rssUrlInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="RSS-Feed URL"
+                    android:singleLine="true" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/rssFeedBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="#00FFFFFF"
+                android:foregroundGravity="center"
+                android:gravity="center"
+                android:paddingHorizontal="0dp"
+                android:paddingVertical="0dp"
+                android:text="Add"
+                app:icon="@drawable/add"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp" />
+
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rssUrls"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:itemCount="14"
+            tools:listitem="@layout/recycler_view_item" />
+    </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
