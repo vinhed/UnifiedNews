@@ -1,115 +1,78 @@
 package com.example.unifiednews.adapters
 
-import android.app.Activity
-import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.unifiednews.R
-import com.example.unifiednews.repository.RssFeed
-import com.example.unifiednews.repository.RssFeedFetcher
-import com.example.unifiednews.repository.RssFeedStorage
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import com.example.unifiednews.data.RssFeedItem
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-class RssFeedAdapter(var rssFeedList: List<String>) : RecyclerView.Adapter<RssFeedAdapter.ViewHolder>() {
+class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView.Adapter<RssFeedAdapter.ViewHolder>() {
 
-    private lateinit var rssFeedStorage: RssFeedStorage
+    private fun parseDate(dateString: String): Date? {
+        val formats = arrayOf(
+            "EEE, dd MMM yyyy HH:mm:ss z",
+            "EEE, dd MMM yyyy HH:mm:ss Z"
+        )
 
-    private fun fetchRssFeed(url: String, holder: ViewHolder) {
-        RssFeedFetcher.fetchAndParseRssFeedToJson(url) { rssFeedXml ->
-            rssFeedXml?.channel?.items?.get(0)?.link.let { articleUrl ->
-                (holder.itemView.context as? Activity)?.runOnUiThread {
-                    holder.titleTextView.text = rssFeedXml?.channel?.title.toString()
-                    holder.descriptionTextView.text = url
-                }
-                if(articleUrl == null) return@fetchAndParseRssFeedToJson
-                RssFeedFetcher.getPageIcon(articleUrl) { iconUrl ->
-                    (holder.itemView.context as? Activity)?.runOnUiThread {
-                        Log.d("RssFeed", iconUrl.toString())
-                        Glide.with(holder.itemView.context)
-                            .load(iconUrl)
-                            .into(holder.imageView)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun isRssFeed(responseBody: String?): Boolean {
-        responseBody ?: return false
-        return responseBody.contains("<rss") || responseBody.contains("<feed")
-    }
-
-    fun isValidRssFeedUrl(url: String, callback: (Boolean) -> Unit) {
-        val urlRegex = "^(http://www\\.|https://www\\.|http://|https://)[a-zA-Z0-9-]+([-.]{1}[a-zA-Z0-9]+)*\\.[a-zA-Z]{2,5}(:[0-9]{1,5})?(/.*)?$".toRegex()
-
-        if (!url.matches(urlRegex)) {
-            callback(false)
-            return
-        }
-
-        Thread {
+        for (format in formats) {
             try {
-                val client = OkHttpClient()
-                val request = Request.Builder().url(url).build()
-                client.newCall(request).execute().use { response ->
-                    if (response.isSuccessful && isRssFeed(response.body?.string())) {
-                        callback(true)
-                    } else {
-                        callback(false)
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                callback(false)
+                return SimpleDateFormat(format, Locale.ENGLISH).parse(dateString)
+            } catch (e: ParseException) {
             }
-        }.start()
+        }
+
+        return null
+    }
+
+    private fun stripHtml(html: String): String {
+        return html.replace(Regex("<[^>]*>"), "").trim()
+    }
+
+    private fun formatDate(date: Date?): String {
+        return if (date != null) {
+            val formatter = SimpleDateFormat("dd MMM HH:mm", Locale.getDefault())
+            formatter.format(date)
+        } else {
+            ""
+        }
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val checkBox: CheckBox = view.findViewById(R.id.checkBox)
-        val imageView: ImageView = view.findViewById(R.id.imageView2)
-        val titleTextView: TextView = view.findViewById(R.id.textView)
-        val descriptionTextView: TextView = view.findViewById(R.id.textView2)
-        val removeButton: ImageButton = view.findViewById(R.id.removeButton)
+        val header: TextView = view.findViewById(R.id.Header)
+        val publisher: TextView = view.findViewById(R.id.Publisher)
+        val description: TextView = view.findViewById(R.id.Description)
+        val dateTime: TextView = view.findViewById(R.id.DateTime)
+        val iconView: ImageView = view.findViewById(R.id.Icon)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_view_item, parent, false)
-        rssFeedStorage = RssFeedStorage(parent.context)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_view_feed_item, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val rssFeedUrl = rssFeedList[position]
+        val item = rssFeedItems[position]
+        holder.header.text = item.header
+        holder.publisher.text = item.publisher
+        holder.description.text = item.description?.let { stripHtml(it) }
+        holder.dateTime.text = formatDate(item.dateTime?.let { parseDate(it) })
 
-        fetchRssFeed(rssFeedUrl, holder)
-
-        holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
-            // Handle CheckBox change
-        }
-
-        holder.removeButton.setOnClickListener {
-            rssFeedStorage.removeRssFeedUrl(rssFeedUrl)
-            removeItemAtPosition(position)
+        if (item.imageUrl != null) {
+            Glide.with(holder.itemView.context)
+                .load(item.imageUrl)
+                .into(holder.iconView)
         }
     }
 
-    override fun getItemCount() = rssFeedList.size
+    override fun getItemCount() = rssFeedItems.size
 
-    private fun removeItemAtPosition(position: Int) {
-        val updatedList = rssFeedList.toMutableList()
-        updatedList.removeAt(position)
-        rssFeedList = updatedList
-        notifyItemRemoved(position)
-    }
+    // Additional methods to update the data set, etc.
 }

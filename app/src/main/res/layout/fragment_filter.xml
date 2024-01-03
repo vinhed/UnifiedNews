@@ -23,6 +23,7 @@
             android:orientation="horizontal">
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/rssInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -65,7 +66,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             tools:itemCount="14"
-            tools:listitem="@layout/recycler_view_item" />
+            tools:listitem="@layout/recycler_view_filter_item" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

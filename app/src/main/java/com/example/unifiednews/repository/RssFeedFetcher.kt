@@ -14,7 +14,7 @@ object RssFeedFetcher {
 
     private val client = OkHttpClient()
 
-    fun fetchAndParseRssFeedToJson(url: String, callback: (RssFeed?) -> Unit) {
+    fun fetchAndParseRssFeed(url: String, callback: (RssFeed?) -> Unit) {
         Thread {
             val rssFeedXml = fetchRssFeed(url)
             val rssFeed = parseXmlToRssFeed(rssFeedXml)
@@ -33,7 +33,8 @@ object RssFeedFetcher {
         }
     }
 
-    fun getPageIcon(url: String, callback: (String?) -> Unit) {
+    fun getPageIcon(url: String?, callback: (String?) -> Unit) {
+        if(url == null) return
         Thread {
             try {
                 val client = OkHttpClient()

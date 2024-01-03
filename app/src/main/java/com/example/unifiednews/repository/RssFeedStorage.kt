@@ -7,6 +7,22 @@ class RssFeedStorage(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    fun setIcon(url: String, iconUrl: String) {
+        prefs.edit().putString("ICON$url", iconUrl).apply()
+    }
+
+    fun getIcon(url: String): String? {
+        return prefs.getString("ICON$url", null)
+    }
+
+    fun setRssFeedState(url: String, state: Boolean) {
+        prefs.edit().putBoolean(url, state).apply()
+    }
+
+    fun isRssFeedEnabled(url: String): Boolean {
+        return prefs.getBoolean(url, true)
+    }
+
     fun saveRssFeedUrl(url: String) {
         val existingFeeds = getRssFeedUrls().toMutableSet()
         existingFeeds.add(url)
