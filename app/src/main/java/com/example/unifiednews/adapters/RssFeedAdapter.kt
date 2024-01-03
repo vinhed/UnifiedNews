@@ -1,10 +1,18 @@
 package com.example.unifiednews.adapters
 
+import android.annotation.SuppressLint
+import android.content.res.ColorStateList
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebView
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.unifiednews.R
@@ -51,12 +59,15 @@ class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView
         val description: TextView = view.findViewById(R.id.Description)
         val dateTime: TextView = view.findViewById(R.id.DateTime)
         val iconView: ImageView = view.findViewById(R.id.Icon)
+        val container: ConstraintLayout = view.findViewById(R.id.Container)
+        //val webView: WebView = view.findViewById(R.id.webView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_view_feed_item, parent, false)
         return ViewHolder(view)
     }
+
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = rssFeedItems[position]
@@ -69,6 +80,15 @@ class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView
             Glide.with(holder.itemView.context)
                 .load(item.imageUrl)
                 .into(holder.iconView)
+        }
+
+        holder.container.setOnClickListener {
+            holder.container.setBackgroundResource(R.drawable.rounded_panel_focus)
+            //item.link?.let { it1 -> holder.webView.loadUrl(it1) }
+            //holder.webView.visibility = View.VISIBLE
+            Handler(Looper.getMainLooper()).postDelayed({
+                holder.container.setBackgroundResource(R.drawable.rounded_panel)
+            }, 500)
         }
     }
 

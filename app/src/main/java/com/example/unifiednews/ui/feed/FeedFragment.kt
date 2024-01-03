@@ -2,14 +2,16 @@ package com.example.unifiednews.ui.feed
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.unifiednews.R
 import com.example.unifiednews.adapters.RssFeedAdapter
 import com.example.unifiednews.data.RssFeedItem
 import com.example.unifiednews.databinding.FragmentFeedBinding
@@ -77,6 +79,16 @@ class FeedFragment : Fragment() {
         recyclerView.adapter = adapter
         val seenUrls = mutableSetOf<String>()
 
+        val imageViewToRotate: ImageView = view.findViewById(R.id.LoadingIcon)
+        val statusMessage: TextView = view.findViewById(R.id.StatusMessage)
+
+        imageViewToRotate.visibility = View.VISIBLE
+        statusMessage.visibility = View.VISIBLE
+
+        startRotationAnimation(imageViewToRotate)
+
+        var completedRssFetches = 0
+
         for (url in rssFeedStorage.getRssFeedUrls()) {
             if (rssFeedStorage.isRssFeedEnabled(url)) {
                 RssFeedFetcher.fetchAndParseRssFeed(url) { rssFeed: RssFeed? ->
@@ -98,7 +110,8 @@ class FeedFragment : Fragment() {
                                     rssFeed.channel!!.title,
                                     item.description,
                                     item.pubDate,
-                                    iconUrl
+                                    iconUrl,
+                                    item.link
                                 )
                             )
                         }
@@ -108,9 +121,23 @@ class FeedFragment : Fragment() {
                         rssFeedItems.addAll(itemsToAdd)
                     }
                     sortAndUpdateList(rssFeedItems, adapter)
+
+                    completedRssFetches++
+
+                    if(completedRssFetches == rssFeedStorage.getRssFeedUrls().size) {
+                        imageViewToRotate.visibility = View.INVISIBLE
+                        statusMessage.visibility = View.INVISIBLE
+                    }
                 }
             }
         }
+    }
+
+    private fun startRotationAnimation(imageView: ImageView) {
+        imageView.animate()
+            .rotationBy(360f)
+            .withEndAction { startRotationAnimation(imageView) } // Repeat the animation
+            .duration = 1000 // Duration of one rotation (in milliseconds)
     }
 
     override fun onDestroyView() {

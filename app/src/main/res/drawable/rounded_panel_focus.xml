@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/PanelBackgroundColorFocus"/> <!-- Background color of the panel -->
+
+    <!-- Define the corner radius -->
+    <corners android:radius="16dp"/> <!-- Adjust the radius value as needed -->
+
+    <!-- Optional: Define padding for the panel -->
+
+    <!-- Optional: Add a border -->
+    <stroke
+        android:width="0dp"
+        android:color="#FF0000"/> <!-- Border color -->
+</shape>

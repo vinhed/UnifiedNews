@@ -9,6 +9,7 @@
     <color name="SecondaryColorVariant">#3B6F95</color>
     <color name="BackgroundColor">#141414</color>
     <color name="PanelBackgroundColor">#2C3E50</color>
+    <color name="PanelBackgroundColorFocus">#202D3A</color>
     <color name="AccentColor">#57A0D3</color> <!--Draw attention to this element-->
     <color name="TextColorPrimary">#ECEFF4</color>
     <color name="TextColorSecondary">#A8A8A8</color>
