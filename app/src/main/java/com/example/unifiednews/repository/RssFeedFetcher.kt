@@ -1,5 +1,6 @@
 package com.example.unifiednews.repository
 
+import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.simpleframework.xml.Element
@@ -15,6 +16,7 @@ object RssFeedFetcher {
     private val client = OkHttpClient()
 
     fun fetchAndParseRssFeed(url: String, callback: (RssFeed?) -> Unit) {
+        Log.d("RssFetcher", url)
         Thread {
             val rssFeedXml = fetchRssFeed(url)
             val rssFeed = parseXmlToRssFeed(rssFeedXml)

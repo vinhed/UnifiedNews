@@ -2,10 +2,25 @@ package com.example.unifiednews.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 
 class RssFeedStorage(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    interface OnRssFeedChangeListener {
+        fun onRssFeedChanged()
+    }
+
+    private var onRssFeedChangeListener: OnRssFeedChangeListener? = null
+
+    fun setOnRssFeedChangeListener(listener: OnRssFeedChangeListener) {
+        this.onRssFeedChangeListener = listener
+    }
+
+    private fun notifyRssFeedChanged() {
+        onRssFeedChangeListener?.onRssFeedChanged()
+    }
 
     fun setIcon(url: String, iconUrl: String) {
         prefs.edit().putString("ICON$url", iconUrl).apply()
@@ -17,6 +32,8 @@ class RssFeedStorage(context: Context) {
 
     fun setRssFeedState(url: String, state: Boolean) {
         prefs.edit().putBoolean(url, state).apply()
+        Log.d("RssActive", state.toString())
+        notifyRssFeedChanged()
     }
 
     fun isRssFeedEnabled(url: String): Boolean {

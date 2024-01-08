@@ -44,6 +44,11 @@ class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView
         return html.replace(Regex("<[^>]*>"), "").trim()
     }
 
+    fun updateData(newItems: List<RssFeedItem>) {
+        rssFeedItems = newItems
+        notifyDataSetChanged()
+    }
+
     private fun formatDate(date: Date?): String {
         return if (date != null) {
             val formatter = SimpleDateFormat("dd MMM HH:mm", Locale.getDefault())
@@ -67,7 +72,6 @@ class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView
         val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_view_feed_item, parent, false)
         return ViewHolder(view)
     }
-
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = rssFeedItems[position]

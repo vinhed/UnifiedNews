@@ -2,6 +2,7 @@ package com.example.unifiednews.ui.feed
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,55 +19,30 @@ import com.example.unifiednews.databinding.FragmentFeedBinding
 import com.example.unifiednews.repository.RssFeed
 import com.example.unifiednews.repository.RssFeedFetcher
 import com.example.unifiednews.repository.RssFeedStorage
-import java.text.ParseException
-import java.text.SimpleDateFormat
-import java.util.*
+import androidx.lifecycle.Observer
 
 class FeedFragment : Fragment() {
 
     private var _binding: FragmentFeedBinding? = null
     private lateinit var rssFeedStorage: RssFeedStorage
+    private lateinit var feedViewModel: FeedViewModel
 
     private val binding get() = _binding!!
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         rssFeedStorage = RssFeedStorage(context)
+        rssFeedStorage.setOnRssFeedChangeListener(object : RssFeedStorage.OnRssFeedChangeListener {
+            override fun onRssFeedChanged() {
+                onUserPreferencesChanged()
+            }
+        })
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View {
-        val feedViewModel = ViewModelProvider(this)[FeedViewModel::class.java]
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        feedViewModel = ViewModelProvider(requireActivity())[FeedViewModel::class.java]
         _binding = FragmentFeedBinding.inflate(inflater, container, false)
         return binding.root
-    }
-
-    private fun parseDate(dateString: String): Date? {
-        val formats = arrayOf(
-            "EEE, dd MMM yyyy HH:mm:ss z",
-            "EEE, dd MMM yyyy HH:mm:ss Z"
-        )
-
-        for (format in formats) {
-            try {
-                return SimpleDateFormat(format, Locale.ENGLISH).parse(dateString)
-            } catch (e: ParseException) {
-            }
-        }
-
-        return null
-    }
-
-    private fun sortAndUpdateList(items: MutableList<RssFeedItem>, adapter: RssFeedAdapter) {
-        synchronized(items) {
-            items.sortByDescending { item ->
-                item.dateTime?.let { parseDate(it) }
-            }
-        }
-        activity?.runOnUiThread {
-            adapter.notifyDataSetChanged()
-        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -74,10 +50,8 @@ class FeedFragment : Fragment() {
 
         val recyclerView: RecyclerView = binding.rssFeedRecycler
         recyclerView.layoutManager = LinearLayoutManager(context)
-        val rssFeedItems = arrayListOf<RssFeedItem>()
-        val adapter = RssFeedAdapter(rssFeedItems)
+        val adapter = RssFeedAdapter(arrayListOf())
         recyclerView.adapter = adapter
-        val seenUrls = mutableSetOf<String>()
 
         val imageViewToRotate: ImageView = view.findViewById(R.id.LoadingIcon)
         val statusMessage: TextView = view.findViewById(R.id.StatusMessage)
@@ -85,12 +59,20 @@ class FeedFragment : Fragment() {
         imageViewToRotate.visibility = View.VISIBLE
         statusMessage.visibility = View.VISIBLE
 
-        startRotationAnimation(imageViewToRotate)
+        feedViewModel.rssFeedItems.observe(viewLifecycleOwner, Observer { items ->
+            adapter.updateData(items)
+        })
 
+        loadFeedData(imageViewToRotate, statusMessage, adapter)
+    }
+
+    private fun loadFeedData(imageViewToRotate: ImageView, statusMessage: TextView, adapter: RssFeedAdapter) {
         var completedRssFetches = 0
+        val totalFeeds = rssFeedStorage.getRssFeedUrls().size
 
+        val seenArticleUrls = mutableSetOf<String>()
         for (url in rssFeedStorage.getRssFeedUrls()) {
-            if (rssFeedStorage.isRssFeedEnabled(url)) {
+            if (!feedViewModel.isUrlLoaded(url) && rssFeedStorage.isRssFeedEnabled(url)) {
                 RssFeedFetcher.fetchAndParseRssFeed(url) { rssFeed: RssFeed? ->
                     var iconUrl = rssFeedStorage.getIcon(url)
                     if(iconUrl == null) {
@@ -101,9 +83,10 @@ class FeedFragment : Fragment() {
                             }
                         }
                     }
+
                     val itemsToAdd = mutableListOf<RssFeedItem>()
                     rssFeed?.channel?.items?.forEach { item ->
-                        if (seenUrls.add(item.link)) {
+                        if (seenArticleUrls.add(item.link)) {
                             itemsToAdd.add(
                                 RssFeedItem(
                                     item.title,
@@ -116,28 +99,32 @@ class FeedFragment : Fragment() {
                             )
                         }
                     }
+                    feedViewModel.updateRssFeedItems(url, itemsToAdd)
 
-                    synchronized(rssFeedItems) {
-                        rssFeedItems.addAll(itemsToAdd)
-                    }
-                    sortAndUpdateList(rssFeedItems, adapter)
-
-                    completedRssFetches++
-
-                    if(completedRssFetches == rssFeedStorage.getRssFeedUrls().size) {
-                        imageViewToRotate.visibility = View.INVISIBLE
-                        statusMessage.visibility = View.INVISIBLE
-                    }
+                    updateCompletionStatus(++completedRssFetches, totalFeeds, imageViewToRotate, statusMessage)
+                }
+            } else {
+                updateCompletionStatus(++completedRssFetches, totalFeeds, imageViewToRotate, statusMessage)
+                if (!rssFeedStorage.isRssFeedEnabled(url)) {
+                    feedViewModel.removeItemsFromUrl(url)
                 }
             }
         }
     }
+    private fun updateCompletionStatus(completedRssFetches: Int, totalFeeds: Int, imageViewToRotate: ImageView, statusMessage: TextView) {
+        if (completedRssFetches == totalFeeds) {
+            imageViewToRotate.visibility = View.INVISIBLE
+            statusMessage.visibility = View.INVISIBLE
+        }
+    }
 
-    private fun startRotationAnimation(imageView: ImageView) {
-        imageView.animate()
-            .rotationBy(360f)
-            .withEndAction { startRotationAnimation(imageView) } // Repeat the animation
-            .duration = 1000 // Duration of one rotation (in milliseconds)
+    fun onUserPreferencesChanged() {
+        Log.d("RssFrag","onUserPreferencesChanged")
+        feedViewModel.refreshFeed()
+        val imageViewToRotate: ImageView = view?.findViewById(R.id.LoadingIcon) ?: return
+        val statusMessage: TextView = view?.findViewById(R.id.StatusMessage) ?: return
+        val adapter = (binding.rssFeedRecycler.adapter as? RssFeedAdapter) ?: return
+        loadFeedData(imageViewToRotate, statusMessage, adapter)
     }
 
     override fun onDestroyView() {
