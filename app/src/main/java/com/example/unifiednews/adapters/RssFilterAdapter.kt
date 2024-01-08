@@ -9,15 +9,17 @@ import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.unifiednews.R
 import com.example.unifiednews.repository.RssFeedFetcher
 import com.example.unifiednews.repository.RssFeedStorage
+import com.example.unifiednews.ui.feed.SharedViewModel
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-class RssFilterAdapter(var rssFeedList: List<String>) : RecyclerView.Adapter<RssFilterAdapter.ViewHolder>() {
+class RssFilterAdapter(var rssFeedList: List<String>, private val notifyChange: () -> Unit) : RecyclerView.Adapter<RssFilterAdapter.ViewHolder>() {
 
     private lateinit var rssFeedStorage: RssFeedStorage
 
@@ -94,6 +96,7 @@ class RssFilterAdapter(var rssFeedList: List<String>) : RecyclerView.Adapter<Rss
         holder.checkBox.isChecked = rssFeedStorage.isRssFeedEnabled(rssFeedUrl)
 
         holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
+            notifyChange()
             rssFeedStorage.setRssFeedState(rssFeedUrl, isChecked)
         }
 

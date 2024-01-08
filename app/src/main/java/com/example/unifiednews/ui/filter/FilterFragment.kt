@@ -18,6 +18,7 @@ import com.example.unifiednews.R
 import com.example.unifiednews.adapters.RssFilterAdapter
 import com.example.unifiednews.databinding.FragmentFilterBinding
 import com.example.unifiednews.repository.RssFeedStorage
+import com.example.unifiednews.ui.feed.SharedViewModel
 
 class FilterFragment : Fragment() {
 
@@ -26,10 +27,14 @@ class FilterFragment : Fragment() {
 
     private lateinit var rssFilterAdapter: RssFilterAdapter
     private lateinit var rssFeedStorage: RssFeedStorage
+    private lateinit var sharedViewModel: SharedViewModel
+
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        Log.d("FilterFragment", "Attached to Activity: ${context::class.java.simpleName}")
         rssFeedStorage = RssFeedStorage(context)
+        sharedViewModel = ViewModelProvider(requireActivity())[SharedViewModel::class.java]
     }
 
     override fun onCreateView(
@@ -86,7 +91,7 @@ class FilterFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        rssFilterAdapter = RssFilterAdapter(rssFeedStorage.getRssFeedUrls())
+        rssFilterAdapter = RssFilterAdapter(rssFeedStorage.getRssFeedUrls()) { sharedViewModel.notifyRssFeedChanged() }
         _binding!!.rssUrls.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = rssFilterAdapter

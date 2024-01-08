@@ -24,22 +24,20 @@ import androidx.lifecycle.Observer
 class FeedFragment : Fragment() {
 
     private var _binding: FragmentFeedBinding? = null
+    private var adapter: RssFeedAdapter? = null
     private lateinit var rssFeedStorage: RssFeedStorage
     private lateinit var feedViewModel: FeedViewModel
+    private lateinit var sharedViewModel: SharedViewModel
 
     private val binding get() = _binding!!
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         rssFeedStorage = RssFeedStorage(context)
-        rssFeedStorage.setOnRssFeedChangeListener(object : RssFeedStorage.OnRssFeedChangeListener {
-            override fun onRssFeedChanged() {
-                onUserPreferencesChanged()
-            }
-        })
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        sharedViewModel = ViewModelProvider(requireActivity())[SharedViewModel::class.java]
         feedViewModel = ViewModelProvider(requireActivity())[FeedViewModel::class.java]
         _binding = FragmentFeedBinding.inflate(inflater, container, false)
         return binding.root
@@ -50,7 +48,7 @@ class FeedFragment : Fragment() {
 
         val recyclerView: RecyclerView = binding.rssFeedRecycler
         recyclerView.layoutManager = LinearLayoutManager(context)
-        val adapter = RssFeedAdapter(arrayListOf())
+        adapter = RssFeedAdapter(arrayListOf())
         recyclerView.adapter = adapter
 
         val imageViewToRotate: ImageView = view.findViewById(R.id.LoadingIcon)
@@ -59,14 +57,21 @@ class FeedFragment : Fragment() {
         imageViewToRotate.visibility = View.VISIBLE
         statusMessage.visibility = View.VISIBLE
 
-        feedViewModel.rssFeedItems.observe(viewLifecycleOwner, Observer { items ->
-            adapter.updateData(items)
-        })
+        feedViewModel.rssFeedItems.observe(viewLifecycleOwner) { items ->
+            adapter!!.updateData(items)
+        }
 
-        loadFeedData(imageViewToRotate, statusMessage, adapter)
+        sharedViewModel.rssFeedChanged.observe(viewLifecycleOwner) { changed ->
+            if (changed) {
+                onUserPreferencesChanged()
+                sharedViewModel.resetRssFeedChanged()
+            }
+        }
+
+        //loadFeedData(imageViewToRotate, statusMessage, adapter)
     }
 
-    private fun loadFeedData(imageViewToRotate: ImageView, statusMessage: TextView, adapter: RssFeedAdapter) {
+    private fun loadFeedData(imageViewToRotate: ImageView, statusMessage: TextView) {
         var completedRssFetches = 0
         val totalFeeds = rssFeedStorage.getRssFeedUrls().size
 
@@ -118,13 +123,13 @@ class FeedFragment : Fragment() {
         }
     }
 
-    fun onUserPreferencesChanged() {
-        Log.d("RssFrag","onUserPreferencesChanged")
+    private fun onUserPreferencesChanged() {
+        Log.d("RssFeed", "Refresh Feed - Load new values")
+        adapter!!.clearData()
         feedViewModel.refreshFeed()
         val imageViewToRotate: ImageView = view?.findViewById(R.id.LoadingIcon) ?: return
         val statusMessage: TextView = view?.findViewById(R.id.StatusMessage) ?: return
-        val adapter = (binding.rssFeedRecycler.adapter as? RssFeedAdapter) ?: return
-        loadFeedData(imageViewToRotate, statusMessage, adapter)
+        loadFeedData(imageViewToRotate, statusMessage)
     }
 
     override fun onDestroyView() {

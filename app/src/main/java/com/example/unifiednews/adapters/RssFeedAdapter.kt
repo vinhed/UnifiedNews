@@ -45,7 +45,22 @@ class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView
     }
 
     fun updateData(newItems: List<RssFeedItem>) {
-        rssFeedItems = newItems
+        rssFeedItems = newItems.sortedWith(Comparator { item1, item2 ->
+            val date1 = item1.dateTime?.let { parseDate(it) }
+            val date2 = item2.dateTime?.let { parseDate(it) }
+
+            when {
+                date1 == null && date2 == null -> 0
+                date1 == null -> 1
+                date2 == null -> -1
+                else -> date2.compareTo(date1)
+            }
+        })
+        notifyDataSetChanged()
+    }
+
+    fun clearData() {
+        rssFeedItems = emptyList()
         notifyDataSetChanged()
     }
 

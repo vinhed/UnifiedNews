@@ -8,18 +8,9 @@ class RssFeedStorage(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    interface OnRssFeedChangeListener {
-        fun onRssFeedChanged()
-    }
-
-    private var onRssFeedChangeListener: OnRssFeedChangeListener? = null
-
-    fun setOnRssFeedChangeListener(listener: OnRssFeedChangeListener) {
-        this.onRssFeedChangeListener = listener
-    }
-
-    private fun notifyRssFeedChanged() {
-        onRssFeedChangeListener?.onRssFeedChanged()
+    companion object {
+        private const val PREFS_NAME = "rss_feed_prefs"
+        private const val RSS_FEED_KEY = "rss_feed_urls"
     }
 
     fun setIcon(url: String, iconUrl: String) {
@@ -32,8 +23,6 @@ class RssFeedStorage(context: Context) {
 
     fun setRssFeedState(url: String, state: Boolean) {
         prefs.edit().putBoolean(url, state).apply()
-        Log.d("RssActive", state.toString())
-        notifyRssFeedChanged()
     }
 
     fun isRssFeedEnabled(url: String): Boolean {
@@ -54,10 +43,5 @@ class RssFeedStorage(context: Context) {
         val feeds = getRssFeedUrls().toMutableSet()
         feeds.remove(url)
         prefs.edit().putStringSet(RSS_FEED_KEY, feeds).apply()
-    }
-
-    companion object {
-        private const val PREFS_NAME = "rss_feed_prefs"
-        private const val RSS_FEED_KEY = "rss_feed_urls"
     }
 }
