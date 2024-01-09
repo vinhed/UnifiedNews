@@ -1,6 +1,7 @@
 package com.example.unifiednews.adapters
 
 import android.app.Activity
+import android.app.Application
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -19,10 +20,16 @@ import com.example.unifiednews.ui.feed.SharedViewModel
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
+
 class RssFilterAdapter(var rssFeedList: List<String>, private val notifyChange: () -> Unit) : RecyclerView.Adapter<RssFilterAdapter.ViewHolder>() {
 
-    private lateinit var rssFeedStorage: RssFeedStorage
+    interface OnItemRemovedListener {
+        fun onItemRemoved(rssFeedMap:Map<String, List<String>>)
+    }
 
+    private lateinit var rssFeedStorage: RssFeedStorage
+    var onMoreButtonClicked: ((String, Int) -> Unit)? = null
+    var onItemRemovedListener: OnItemRemovedListener? = null
     private fun fetchRssFeed(url: String, holder: ViewHolder) {
         RssFeedFetcher.fetchAndParseRssFeed(url) { rssFeedXml ->
             rssFeedXml?.channel?.items?.get(0)?.link.let { articleUrl ->
@@ -79,12 +86,12 @@ class RssFilterAdapter(var rssFeedList: List<String>, private val notifyChange: 
         val imageView: ImageView = view.findViewById(R.id.imageView2)
         val titleTextView: TextView = view.findViewById(R.id.Header)
         val descriptionTextView: TextView = view.findViewById(R.id.Description)
-        val removeButton: ImageButton = view.findViewById(R.id.removeButton)
+        val moreButton: ImageButton = view.findViewById(R.id.moreButton)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_view_filter_item, parent, false)
-        rssFeedStorage = RssFeedStorage(parent.context)
+        rssFeedStorage = RssFeedStorage(parent.context.applicationContext as Application)
         return ViewHolder(view)
     }
 
@@ -100,18 +107,26 @@ class RssFilterAdapter(var rssFeedList: List<String>, private val notifyChange: 
             rssFeedStorage.setRssFeedState(rssFeedUrl, isChecked)
         }
 
-        holder.removeButton.setOnClickListener {
-            rssFeedStorage.removeRssFeedUrl(rssFeedUrl)
-            removeItemAtPosition(position)
+        holder.moreButton.setOnClickListener {
+            //display module _binding!!.moreModal
+            //
+            Log.d("APA", position.toString())
+            onMoreButtonClicked?.invoke(rssFeedUrl, position)
+            //removeItemAtPosition(position)
         }
     }
 
     override fun getItemCount() = rssFeedList.size
 
-    private fun removeItemAtPosition(position: Int) {
+    fun removeItemAtPosition(position: Int, url: String) {
         val updatedList = rssFeedList.toMutableList()
         updatedList.removeAt(position)
         rssFeedList = updatedList
         notifyItemRemoved(position)
+        rssFeedStorage.removeRssFeedUrl(url)
+        rssFeedStorage.removeRssInFolders(url)
+        val map = rssFeedStorage.getFoldersMap()
+        Log.d("map", map.toString())
+        onItemRemovedListener?.onItemRemoved(map)
     }
 }

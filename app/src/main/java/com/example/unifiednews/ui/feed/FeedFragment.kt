@@ -1,5 +1,6 @@
 package com.example.unifiednews.ui.feed
 
+import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
@@ -33,7 +34,8 @@ class FeedFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        rssFeedStorage = RssFeedStorage(context)
+        rssFeedStorage = RssFeedStorage(context.applicationContext as Application)
+
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {

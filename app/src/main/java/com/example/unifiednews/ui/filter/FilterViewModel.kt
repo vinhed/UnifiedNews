@@ -1,11 +1,20 @@
 package com.example.unifiednews.ui.filter
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import com.example.unifiednews.repository.RssFeedFetcher
+import android.app.Application
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
+import com.example.unifiednews.repository.RssFeedStorage
+class FilterViewModel(application: Application) : AndroidViewModel(application) {
+    private val rssFeedStorage = RssFeedStorage(application)
+    fun saveFolder(folderName: String):Boolean {
+        Log.d(folderName, "folderName")
 
-class FilterViewModel : ViewModel() {
+        return rssFeedStorage.saveFolderToFolders(folderName)
+    }
+
+    fun addToFolder(url: String, folderName: String):Boolean {
+        return rssFeedStorage.addUrlToFolder(url, folderName)
+    }
 
 
 }
