@@ -15,6 +15,13 @@ class RssFeedStorage(application: Application) {
         application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val gson = Gson()
 
+    fun setLastUpdate(lastUpdate: String) {
+        prefs.edit().putString("last_update", lastUpdate).apply()
+    }
+
+    fun getLastUpdate(): String? {
+        return prefs.getString("last_update", "")
+    }
 
     private fun storeFilterList(list: List<RssFilterItem>) {
         val jsonString = gson.toJson(list)
@@ -193,6 +200,10 @@ class RssFeedStorage(application: Application) {
 
     fun getRssFeedUrls(): List<String> {
         return (prefs.getStringSet(RSS_FEED_KEY, emptySet()) ?: emptySet()).toList()
+    }
+
+    fun getActiveRssFeedUrls(): Int {
+        return getFilterList().count { isRssFeedEnabled(it.link) }
     }
 
     fun removeRssFeedUrl(url: String) {

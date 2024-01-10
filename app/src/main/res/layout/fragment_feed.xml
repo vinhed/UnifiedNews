@@ -12,14 +12,17 @@
 
     <TextView
         android:id="@+id/StatusMessage"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Loading"
-        android:textColor="@color/TextColorPrimary"
-        android:textSize="16sp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@+id/rssFeedRecycler"
-        app:layout_constraintEnd_toEndOf="@+id/rssFeedRecycler"
+        android:gravity="center"
+        android:paddingLeft="0dp"
+        android:paddingTop="0dp"
+        android:paddingRight="0dp"
+        android:paddingBottom="4dp"
+        android:textColor="@color/TextColorSecondary"
+        android:textSize="12sp"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -28,24 +31,32 @@
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:layout_marginStart="2dp"
-        android:layout_marginTop="2dp"
-        android:backgroundTint="@color/white"
+        android:layout_marginTop="1dp"
         android:padding="0dp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="@+id/StatusMessage"
+        android:visibility="gone"
         app:layout_constraintStart_toEndOf="@+id/StatusMessage"
         app:layout_constraintTop_toTopOf="@+id/StatusMessage"
-        app:srcCompat="@drawable/loading" />
+        app:srcCompat="@drawable/loading"
+        app:tint="@color/TextColorPrimary" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rssFeedRecycler"
-        android:layout_width="0dp"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/StatusMessage"
-        tools:listitem="@layout/recycler_view_feed_item" />
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rssFeedRecycler"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/StatusMessage"
+            tools:listitem="@layout/recycler_view_feed_item" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <LinearLayout
         android:id="@+id/webViewTopBar"

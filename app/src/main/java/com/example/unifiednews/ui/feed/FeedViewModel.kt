@@ -5,6 +5,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.unifiednews.data.RssFeedItem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.lang.Integer.min
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -16,6 +18,7 @@ class FeedViewModel : ViewModel() {
     val rssFeedItems: LiveData<List<RssFeedItem>> = _rssFeedItems
 
     private val loadedUrls = mutableSetOf<String>()
+    private var completedRssFetches = 0
 
     private fun parseDate(dateString: String): Date? {
         val formats = arrayOf(
@@ -33,7 +36,19 @@ class FeedViewModel : ViewModel() {
         return null
     }
 
-    fun updateRssFeedItems(url: String, newItems: List<RssFeedItem>) {
+    fun resetCompletionStatus() {
+        completedRssFetches = 0
+    }
+
+    fun completionCheck(totalFeeds: Int, completionCallback: () -> Unit) {
+        completedRssFetches++
+        Log.d("completionCheck", completedRssFetches.toString())
+        if(completedRssFetches >= totalFeeds) {
+            completionCallback()
+        }
+    }
+
+    fun updateRssFeedItems(url: String, newItems: List<RssFeedItem>, totalFeeds: Int, completionCallback: () -> Unit) {
         loadedUrls.add(url)
         val currentItems = _rssFeedItems.value.orEmpty().toMutableList()
         val sortedNewItems = newItems.sortedByDescending { it.dateTime?.let { parseDate(it) } }
@@ -61,6 +76,8 @@ class FeedViewModel : ViewModel() {
         finalList.addAll(sortedNewItems.subList(newIndex, sortedNewItems.size))
 
         _rssFeedItems.postValue(finalList.subList(0, min(100, finalList.size)))
+
+        completionCheck(totalFeeds, completionCallback)
     }
 
     fun removeItemsFromUrl(url: String) {
