@@ -67,17 +67,4 @@
         app:srcCompat="@drawable/more_vert"
         app:tint="@color/TextColorPrimary" />
 
-    <Switch
-        android:id="@+id/folderSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:foregroundGravity="right"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

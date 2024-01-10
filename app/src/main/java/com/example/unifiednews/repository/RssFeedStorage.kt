@@ -11,7 +11,8 @@ import com.google.gson.reflect.TypeToken
 
 class RssFeedStorage(application: Application) {
 
-    private val prefs: SharedPreferences = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences =
+        application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val gson = Gson()
 
 
@@ -140,9 +141,38 @@ class RssFeedStorage(application: Application) {
             foldersMap[folderName] = listOf()
             val foldersMapString = gson.toJson(foldersMap)
             prefs.edit().putString(FOLDERS_KEY, foldersMapString).apply()
+            val switchMap = getFoldersSwitchBools().toMutableMap()
+            switchMap[folderName] = false
+            val switchMapString = gson.toJson(switchMap)
+            prefs.edit().putString(FOLDER_SWITCH_KEY, switchMapString).apply()
             return true
         }
         return false
+    }
+
+    fun setSwitchBoolToFolder(folderName: String, boolean: Boolean) {
+        val switchMap = getFoldersSwitchBools().toMutableMap()
+        Log.d("BOOOOL", boolean.toString() + " " + switchMap.toString())
+
+        switchMap[folderName] = boolean
+        val switchMapString = gson.toJson(switchMap)
+        prefs.edit().putString(FOLDER_SWITCH_KEY, switchMapString).apply()
+    }
+
+    fun getFolderSwitchBool(folderName: String): Boolean {
+        val foldersMap = getFoldersSwitchBools()
+        return foldersMap[folderName] ?: false
+
+    }
+
+    fun getFoldersSwitchBools(): Map<String, Boolean> {
+        val foldersMap = prefs.getString(FOLDER_SWITCH_KEY, null)
+        return if (foldersMap != null) {
+            val type = object : TypeToken<Map<String, Boolean>>() {}.type
+            gson.fromJson(foldersMap, type)
+        } else {
+            emptyMap()
+        }
     }
 
     fun getFolders(): List<String> {
@@ -171,9 +201,9 @@ class RssFeedStorage(application: Application) {
         prefs.edit().putStringSet(RSS_FEED_KEY, feeds).apply()
     }
 
-    fun removeRssInFolder(folderName: String, url: String, position: Int): Boolean {
+    fun removeRssInFolder(folderName: String, url: String?, position: Int): Boolean {
         val foldersMap = getFoldersMap().toMutableMap()
-        Log.d("BEFOREREMOVE" , foldersMap.toString())
+        Log.d("BEFOREREMOVE", foldersMap.toString())
         foldersMap[folderName]?.let { folderUrls ->
             if (url in folderUrls) {
                 val mutableFolderUrls = folderUrls.toMutableList()
@@ -208,6 +238,7 @@ class RssFeedStorage(application: Application) {
         private const val PREFS_NAME = "rss_feed_prefs"
         private const val RSS_FEED_KEY = "rss_feed_urls"
         private const val FOLDERS_KEY = "folders_key"
+        private const val FOLDER_SWITCH_KEY = "folders_switch_key"
     }
 
 }
