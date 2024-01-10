@@ -104,21 +104,15 @@ class FilterFragment : Fragment() {
         val expandableListView = binding.root.findViewById<ExpandableListView>(R.id.expandableListView)
         val foldersMap = rssFeedStorage.getFoldersMap()
 
-        expandableListAdapter = CustomExpandableListAdapter(requireContext(), foldersMap.keys, foldersMap)
-        expandableListAdapter.onChildMoreButtonClicked = { url, position ->
+        expandableListAdapter = CustomExpandableListAdapter(requireContext(), foldersMap.keys, foldersMap, rssFeedStorage, sharedViewModel)
+        expandableListAdapter.onChildMoreButtonClicked = { url, position, folderName ->
             Log.d("CONTEXT", "CUM")
+            Log.d("FÖLD", folderName)
             val context = _binding?.root?.context
             if (context != null) {
-                // Get the list of folders
-                val folders = rssFeedStorage.getFolders()
-                Log.d("FOLDERSMAP", folders.toString())
+                filterViewModel.removeRssFromFolder(folderName, url, position)
+                Log.d("FÖLD", folderName)
 
-                // Now we can safely use the context for ArrayAdapter
-                val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, folders)
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                _binding?.spinner?.adapter = adapter
-
-                showMoreModal(url, position)
             } else {
                 // Handle the case where context is null
                 // For example, show an error message or log an error
@@ -147,7 +141,7 @@ class FilterFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        rssFilterAdapter = RssFilterAdapter(rssFeedStorage.getRssFeedUrls()) { sharedViewModel.notifyRssFeedChanged() }.apply {
+        rssFilterAdapter = RssFilterAdapter(rssFeedStorage.getRssFeedUrls(), rssFeedStorage, { sharedViewModel.notifyRssFeedChanged()}, false, "", sharedViewModel).apply {
             onMoreButtonClicked = { url, position ->
                 Log.d("CONTEXT", "CUM")
                 val context = _binding?.root?.context

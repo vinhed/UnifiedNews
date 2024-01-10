@@ -26,6 +26,17 @@ class RssFeedStorage(application: Application) {
     fun setRssFeedState(url: String, state: Boolean) {
         prefs.edit().putBoolean(url, state).apply()
     }
+    fun getRssFeedState(): Map<String, Boolean> {
+        val rssFeedState = mutableMapOf<String, Boolean>()
+        val allEntries = prefs.all
+        for (entry in allEntries) {
+            if (entry.key != RSS_FEED_KEY && entry.key != FOLDERS_KEY) {
+                val state = entry.value as? Boolean ?: continue
+                rssFeedState[entry.key] = state
+            }
+        }
+        return rssFeedState
+    }
 
     fun isRssFeedEnabled(url: String): Boolean {
         return prefs.getBoolean(url, true)
@@ -93,6 +104,22 @@ class RssFeedStorage(application: Application) {
         val feeds = getRssFeedUrls().toMutableSet()
         feeds.remove(url)
         prefs.edit().putStringSet(RSS_FEED_KEY, feeds).apply()
+    }
+    fun removeRssInFolder(folderName: String, url: String, position: Int): Boolean {
+        val foldersMap = getFoldersMap().toMutableMap()
+        Log.d("BEFOREREMOVE" , foldersMap.toString())
+        foldersMap[folderName]?.let { folderUrls ->
+            if (url in folderUrls) {
+                val mutableFolderUrls = folderUrls.toMutableList()
+                mutableFolderUrls.removeAt(position)
+
+                foldersMap[folderName] = mutableFolderUrls
+                saveFoldersMap(foldersMap)
+                return true
+            }
+        }
+
+        return false
     }
 
     fun removeRssInFolders(url: String) {

@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.unifiednews.R
+import com.example.unifiednews.managers.RssFeedStateManager
 import com.example.unifiednews.repository.RssFeedFetcher
 import com.example.unifiednews.repository.RssFeedStorage
 import com.example.unifiednews.ui.feed.SharedViewModel
@@ -21,13 +22,23 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 
-class RssFilterAdapter(var rssFeedList: List<String>, private val notifyChange: () -> Unit) : RecyclerView.Adapter<RssFilterAdapter.ViewHolder>() {
+class RssFilterAdapter(var rssFeedList: List<String>,
+                       private var rssFeedStorage: RssFeedStorage,
+                       private val notifyChange: () -> Unit,
+                       private val isChildAdapter: Boolean = false,
+                       private val folderName: String,
+                       private val sharedViewModel: SharedViewModel) : RecyclerView.Adapter<RssFilterAdapter.ViewHolder>() {
 
     interface OnItemRemovedListener {
         fun onItemRemoved(rssFeedMap:Map<String, List<String>>)
     }
-
-    private lateinit var rssFeedStorage: RssFeedStorage
+    init {
+        rssFeedList.forEach { url ->
+            RssFeedStateManager.setRssFeedState(url, rssFeedStorage.isRssFeedEnabled(url))
+        }
+        Log.d("CHECKEDSTATES", RssFeedStateManager.getCheckedStates().toString())
+    }
+    //private lateinit var rssFeedStorage: RssFeedStorage
     var onMoreButtonClicked: ((String, Int) -> Unit)? = null
     var onItemRemovedListener: OnItemRemovedListener? = null
     private fun fetchRssFeed(url: String, holder: ViewHolder) {
@@ -80,6 +91,13 @@ class RssFilterAdapter(var rssFeedList: List<String>, private val notifyChange: 
             }
         }.start()
     }
+    fun toggleAllCheckboxes(checked: Boolean) {
+        rssFeedList.forEach { url ->
+            RssFeedStateManager.setRssFeedState(url, checked)
+            rssFeedStorage.setRssFeedState(url, checked)
+        }
+        notifyDataSetChanged() // Notify adapter of data change
+    }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val checkBox: CheckBox = view.findViewById(R.id.checkBox)
@@ -98,15 +116,27 @@ class RssFilterAdapter(var rssFeedList: List<String>, private val notifyChange: 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val rssFeedUrl = rssFeedList[position]
 
-        fetchRssFeed(rssFeedUrl, holder)
 
-        holder.checkBox.isChecked = rssFeedStorage.isRssFeedEnabled(rssFeedUrl)
+        holder.checkBox.setOnCheckedChangeListener(null)
+        holder.checkBox.isChecked = RssFeedStateManager.isRssFeedEnabled(rssFeedUrl)
 
         holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
-            notifyChange()
+            RssFeedStateManager.setRssFeedState(rssFeedUrl, isChecked)
             rssFeedStorage.setRssFeedState(rssFeedUrl, isChecked)
+            notifyChange()
+            Log.d("ISITCHECKING", rssFeedStorage.getRssFeedState().toString())
+            sharedViewModel.notifyRssFeedChanged()
         }
+        fetchRssFeed(rssFeedUrl, holder)
+        if (!isChildAdapter) {
 
+            Log.d("Debug", "Binding view for URL: $rssFeedUrl at position $position")
+        }
+        if (isChildAdapter) {
+            holder.moreButton.setImageResource(R.drawable.remove) // Icon for child adapter
+        } else {
+            holder.moreButton.setImageResource(R.drawable.more_vert) // Default icon
+        }
         holder.moreButton.setOnClickListener {
             //display module _binding!!.moreModal
             //

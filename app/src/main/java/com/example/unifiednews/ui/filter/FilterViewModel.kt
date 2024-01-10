@@ -15,6 +15,9 @@ class FilterViewModel(application: Application) : AndroidViewModel(application) 
     fun addToFolder(url: String, folderName: String):Boolean {
         return rssFeedStorage.addUrlToFolder(url, folderName)
     }
+    fun removeRssFromFolder(folderName: String, url: String, position: Int): Boolean {
+        return rssFeedStorage.removeRssInFolder(folderName, url, position)
+    }
 
 
 }
