@@ -143,7 +143,6 @@ class RssFilterAdapter(var rssFeedList: List<String>,
         holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
             RssFeedStateManager.setRssFeedState(rssFeedUrl, isChecked)
             rssFeedStorage.setRssFeedState(rssFeedUrl, isChecked)
-            notifyChange()
             Log.d("ISITCHECKING", rssFeedStorage.getRssFeedState().toString())
             sharedViewModel.notifyRssFeedChanged()
         }

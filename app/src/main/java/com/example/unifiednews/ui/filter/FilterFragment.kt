@@ -63,6 +63,13 @@ class FilterFragment : Fragment() {
             _binding!!.folderNameModal.visibility = View.INVISIBLE
             _binding!!.folderName.setText("")
         }
+        sharedViewModel.rssFeedChanged.observe(viewLifecycleOwner) {
+            if (it) {
+                // Refresh adapters to reflect the state changes
+                expandableListAdapter.notifyDataSetChanged()
+                rssFilterAdapter.notifyDataSetChanged()
+            }
+        }
         _binding!!.addName.setOnClickListener {
             val folderName: String = _binding!!.folderName.text.toString()
             if (folderName.isBlank()) {
@@ -71,6 +78,9 @@ class FilterFragment : Fragment() {
             }
             if (filterViewModel.saveFolder(folderName)) {
                 Toast.makeText(context, "Folder $folderName created", Toast.LENGTH_SHORT).show()
+                val updatedFoldersMap = rssFeedStorage.getFoldersMap()
+                expandableListAdapter.updateFolders(updatedFoldersMap)
+                expandableListAdapter.notifyDataSetChanged()
             } else Toast.makeText(context, "Failed to create $folderName ", Toast.LENGTH_SHORT).show()
             _binding!!.folderNameModal.visibility = View.INVISIBLE
             _binding!!.folderName.setText("")
