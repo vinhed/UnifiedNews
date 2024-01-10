@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import com.example.unifiednews.data.RssFeedItem
+import com.example.unifiednews.data.RssFilterItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -13,10 +14,44 @@ class RssFeedStorage(application: Application) {
     private val prefs: SharedPreferences = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val gson = Gson()
 
+
+    private fun storeFilterList(list: List<RssFilterItem>) {
+        val jsonString = gson.toJson(list)
+        prefs.edit().putString("rssFeedFilterList", jsonString).apply()
+    }
+
+    private fun getFilterList(): List<RssFilterItem> {
+        val jsonString = prefs.getString("rssFeedFilterList", null)
+        return if (jsonString != null) {
+            val type = object : TypeToken<List<RssFilterItem>>() {}.type
+            gson.fromJson(jsonString, type)
+        } else {
+            emptyList()
+        }
+    }
+
+    fun getFilterItem(link: String): RssFilterItem? {
+        val currentList = getFilterList().toMutableList()
+        return currentList.find { it.link == link }
+    }
+
+    fun addFilterItem(item: RssFilterItem) {
+        val currentList = getFilterList().toMutableList()
+        currentList.add(item)
+        storeFilterList(currentList)
+    }
+
     private fun storeBookmarkList(list: List<RssFeedItem>) {
         val jsonString = gson.toJson(list)
         prefs.edit().putString("rssFeedBookmarkList", jsonString).apply()
     }
+
+    fun removeFilterItem(link: String) {
+        val currentList = getFilterList().toMutableList()
+        currentList.remove(getFilterItem(link))
+        storeFilterList(currentList)
+    }
+
 
     fun getBookmarkList(): List<RssFeedItem> {
         val jsonString = prefs.getString("rssFeedBookmarkList", null)
@@ -55,6 +90,7 @@ class RssFeedStorage(application: Application) {
     fun setRssFeedState(url: String, state: Boolean) {
         prefs.edit().putBoolean(url, state).apply()
     }
+
     fun getRssFeedState(): Map<String, Boolean> {
         val rssFeedState = mutableMapOf<String, Boolean>()
         val allEntries = prefs.all
@@ -134,6 +170,7 @@ class RssFeedStorage(application: Application) {
         feeds.remove(url)
         prefs.edit().putStringSet(RSS_FEED_KEY, feeds).apply()
     }
+
     fun removeRssInFolder(folderName: String, url: String, position: Int): Boolean {
         val foldersMap = getFoldersMap().toMutableMap()
         Log.d("BEFOREREMOVE" , foldersMap.toString())
@@ -166,7 +203,6 @@ class RssFeedStorage(application: Application) {
         prefs.edit().putString(FOLDERS_KEY, foldersMapString).apply()
 
     }
-
 
     companion object {
         private const val PREFS_NAME = "rss_feed_prefs"

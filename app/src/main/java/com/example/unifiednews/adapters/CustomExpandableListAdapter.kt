@@ -90,7 +90,7 @@ class CustomExpandableListAdapter(
         convertView: View?,
         parent: ViewGroup?
     ): View {
-        val item = getChild(groupPosition, childPosition) as RssFilterItem
+        val item = rssFeedStorage.getFilterItem(getChild(groupPosition, childPosition) as String)
         val layoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val view = layoutInflater.inflate(R.layout.recycler_view_filter_item, null)
 
@@ -100,19 +100,19 @@ class CustomExpandableListAdapter(
         removeButton.setImageResource(R.drawable.remove)
         val checkBox: CheckBox = view.findViewById(R.id.checkBox)
         val image: ImageView = view.findViewById(R.id.imageView2)
-        header.text = item.header
-        description.text = item.description
+        header.text = item?.header
+        description.text = item?.link
 
         removeButton.setOnClickListener{
             Log.d("DELETETHIS SHIT", "BRÖ")
         }
-        if (item.image != null) {
-            if (convertView != null) {
-                Glide.with(convertView.context)
-                    .load(item.image)
-                    .into(image)
-            }
+
+        if (convertView != null) {
+            Glide.with(convertView.context)
+                .load(item?.iconLink)
+                .into(image)
         }
+
         return view
         /*
         val view: View = if (convertView == null || convertView.tag != groupPosition) {

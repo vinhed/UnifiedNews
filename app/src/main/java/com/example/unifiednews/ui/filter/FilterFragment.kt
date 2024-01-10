@@ -64,7 +64,7 @@ class FilterFragment : Fragment() {
             _binding!!.folderName.setText("")
         }
         _binding!!.addName.setOnClickListener {
-            var folderName: String = _binding!!.folderName.text.toString()
+            val folderName: String = _binding!!.folderName.text.toString()
             if (folderName.isBlank()) {
                 Toast.makeText(context, "DU ÄR SÄMST", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -147,19 +147,14 @@ class FilterFragment : Fragment() {
                 Log.d("CONTEXT", "CUM")
                 val context = _binding?.root?.context
                 if (context != null) {
-                    // Get the list of folders
                     val folders = rssFeedStorage.getFolders()
                     Log.d("FOLDERSMAP", folders.toString())
 
-                    // Now we can safely use the context for ArrayAdapter
                     val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, folders)
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                     _binding?.spinner?.adapter = adapter
 
                     showMoreModal(url, position)
-                } else {
-                    // Handle the case where context is null
-                    // For example, show an error message or log an error
                 }
                 onItemRemovedListener = expandableListAdapter
 
@@ -183,7 +178,7 @@ class FilterFragment : Fragment() {
             } else {
                 val selectedItem = _binding!!.spinner.selectedItem
                 filterViewModel.addToFolder(url, selectedItem.toString())
-                var map = rssFeedStorage.getFoldersMap()
+                val map = rssFeedStorage.getFoldersMap()
                 expandableListAdapter.updateFolders(map)
             }
             _binding!!.moreModal.visibility = View.INVISIBLE

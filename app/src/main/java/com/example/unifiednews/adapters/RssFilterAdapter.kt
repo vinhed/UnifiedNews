@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.unifiednews.R
+import com.example.unifiednews.data.RssFilterItem
 import com.example.unifiednews.managers.RssFeedStateManager
 import com.example.unifiednews.repository.RssFeedFetcher
 import com.example.unifiednews.repository.RssFeedStorage
@@ -29,8 +30,6 @@ class RssFilterAdapter(var rssFeedList: List<String>,
                        private val folderName: String,
                        private val sharedViewModel: SharedViewModel) : RecyclerView.Adapter<RssFilterAdapter.ViewHolder>() {
 
-    private val alreadySeen: MutableList<String> = mutableListOf();
-
     interface OnItemRemovedListener {
         fun onItemRemoved(rssFeedMap:Map<String, List<String>>)
     }
@@ -40,23 +39,41 @@ class RssFilterAdapter(var rssFeedList: List<String>,
         }
         Log.d("CHECKEDSTATES", RssFeedStateManager.getCheckedStates().toString())
     }
-    //private lateinit var rssFeedStorage: RssFeedStorage
+
     var onMoreButtonClicked: ((String, Int) -> Unit)? = null
     var onItemRemovedListener: OnItemRemovedListener? = null
-    private fun fetchRssFeed(url: String, holder: ViewHolder) {
-        RssFeedFetcher.fetchAndParseRssFeed(url) { rssFeedXml ->
-            rssFeedXml?.channel?.items?.get(0)?.link.let { articleUrl ->
-                (holder.itemView.context as? Activity)?.runOnUiThread {
-                    holder.titleTextView.text = rssFeedXml?.channel?.title.toString()
-                    holder.descriptionTextView.text = url
-                }
-                if(articleUrl == null) return@fetchAndParseRssFeed
-                RssFeedFetcher.getPageIcon(articleUrl) { iconUrl ->
+
+    private fun fetchFilterData(url: String, holder: ViewHolder) {
+
+        val rssFilterItem = rssFeedStorage.getFilterItem(url)
+        if(rssFilterItem != null) {
+            holder.titleTextView.text = rssFilterItem.header
+            holder.descriptionTextView.text = url
+            Glide.with(holder.itemView.context)
+                .load(rssFilterItem.iconLink)
+                .into(holder.imageView)
+        } else {
+            RssFeedFetcher.fetchAndParseRssFeed(url) { rssFeedXml ->
+                val rssFilterItemToAdd = RssFilterItem("", "", "")
+
+                rssFeedXml?.channel?.items?.get(0)?.link.let { articleUrl ->
                     (holder.itemView.context as? Activity)?.runOnUiThread {
-                        Log.d("RssFeed", iconUrl.toString())
-                        Glide.with(holder.itemView.context)
-                            .load(iconUrl)
-                            .into(holder.imageView)
+                        holder.titleTextView.text = rssFeedXml?.channel?.title.toString()
+                        holder.descriptionTextView.text = url
+                        rssFilterItemToAdd.header = rssFeedXml?.channel?.title.toString()
+                        rssFilterItemToAdd.link = url
+                    }
+                    if(articleUrl == null) return@fetchAndParseRssFeed
+                    RssFeedFetcher.getPageIcon(articleUrl) { iconUrl ->
+                        (holder.itemView.context as? Activity)?.runOnUiThread {
+                            if (iconUrl != null) {
+                                rssFilterItemToAdd.iconLink = iconUrl
+                            }
+                            Glide.with(holder.itemView.context)
+                                .load(iconUrl)
+                                .into(holder.imageView)
+                            rssFeedStorage.addFilterItem(rssFilterItemToAdd)
+                        }
                     }
                 }
             }
@@ -118,7 +135,7 @@ class RssFilterAdapter(var rssFeedList: List<String>,
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val rssFeedUrl = rssFeedList[position]
 
-        fetchRssFeed(rssFeedUrl, holder)
+        fetchFilterData(rssFeedUrl, holder)
 
         holder.checkBox.setOnCheckedChangeListener(null)
         holder.checkBox.isChecked = RssFeedStateManager.isRssFeedEnabled(rssFeedUrl)
@@ -130,22 +147,18 @@ class RssFilterAdapter(var rssFeedList: List<String>,
             Log.d("ISITCHECKING", rssFeedStorage.getRssFeedState().toString())
             sharedViewModel.notifyRssFeedChanged()
         }
-        fetchRssFeed(rssFeedUrl, holder)
         if (!isChildAdapter) {
 
             Log.d("Debug", "Binding view for URL: $rssFeedUrl at position $position")
         }
         if (isChildAdapter) {
-            holder.moreButton.setImageResource(R.drawable.remove) // Icon for child adapter
+            holder.moreButton.setImageResource(R.drawable.remove)
         } else {
-            holder.moreButton.setImageResource(R.drawable.more_vert) // Default icon
+            holder.moreButton.setImageResource(R.drawable.more_vert)
         }
         holder.moreButton.setOnClickListener {
-            //display module _binding!!.moreModal
-            //
             Log.d("APA", position.toString())
             onMoreButtonClicked?.invoke(rssFeedUrl, position)
-            //removeItemAtPosition(position)
         }
     }
 
@@ -161,5 +174,6 @@ class RssFilterAdapter(var rssFeedList: List<String>,
         val map = rssFeedStorage.getFoldersMap()
         Log.d("map", map.toString())
         onItemRemovedListener?.onItemRemoved(map)
+        rssFeedStorage.removeFilterItem(url)
     }
 }

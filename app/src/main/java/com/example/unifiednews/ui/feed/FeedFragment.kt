@@ -35,7 +35,7 @@ class FeedFragment : Fragment() {
     private lateinit var rssFeedStorage: RssFeedStorage
     private lateinit var feedViewModel: FeedViewModel
     private lateinit var sharedViewModel: SharedViewModel
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
+    private var coroutineScope = CoroutineScope(Dispatchers.Main)
 
     private val binding get() = _binding!!
 
@@ -48,11 +48,20 @@ class FeedFragment : Fragment() {
         sharedViewModel = ViewModelProvider(requireActivity())[SharedViewModel::class.java]
         feedViewModel = ViewModelProvider(requireActivity())[FeedViewModel::class.java]
         _binding = FragmentFeedBinding.inflate(inflater, container, false)
+        coroutineScope = CoroutineScope(Dispatchers.Main)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val imageViewToRotate: ImageView = view.findViewById(R.id.LoadingIcon)
+        val statusMessage: TextView = view.findViewById(R.id.StatusMessage)
+
+        imageViewToRotate.visibility = View.VISIBLE
+        statusMessage.visibility = View.VISIBLE
+
+        startRotationAnimation(imageViewToRotate)
 
         val recyclerView: RecyclerView = binding.rssFeedRecycler
         recyclerView.layoutManager = LinearLayoutManager(context)
@@ -65,19 +74,15 @@ class FeedFragment : Fragment() {
         )
         recyclerView.adapter = adapter
 
-        val imageViewToRotate: ImageView = view.findViewById(R.id.LoadingIcon)
-        val statusMessage: TextView = view.findViewById(R.id.StatusMessage)
-
-        imageViewToRotate.visibility = View.VISIBLE
-        statusMessage.visibility = View.VISIBLE
-
         _binding?.closeWebViewButton?.setOnClickListener {
             _binding?.webViewTopBar?.visibility = View.INVISIBLE
             _binding?.webView?.visibility  = View.INVISIBLE
         }
 
         feedViewModel.rssFeedItems.observe(viewLifecycleOwner) { items ->
-            adapter!!.updateData(items)
+            coroutineScope.launch {
+                adapter!!.updateAndSortData(items)
+            }
         }
 
         sharedViewModel.rssFeedChanged.observe(viewLifecycleOwner) { changed ->
@@ -87,36 +92,31 @@ class FeedFragment : Fragment() {
             }
         }
 
-        startRotationAnimation(imageViewToRotate)
         loadFeedDataWithCoroutines()
     }
 
     private fun loadFeedDataWithCoroutines() {
-        Log.d("RssFeed", "Outside")
-
         var completedRssFetches = 0
         val totalFeeds = rssFeedStorage.getRssFeedUrls().size
-
         coroutineScope.launch {
-            Log.d("RssFeed", "Inside")
             val seenArticleUrls = mutableSetOf<String>()
             rssFeedStorage.getRssFeedUrls().forEach { url ->
-                if (rssFeedStorage.isRssFeedEnabled(url) && !feedViewModel.isUrlLoaded(url)) {
-                    withContext(Dispatchers.IO) {
-                        RssFeedFetcher.fetchAndParseRssFeed(url) { rssFeed ->
-                            processFetchedRssFeed(rssFeed, url, seenArticleUrls)
-                        }
+                if(!seenArticleUrls.contains(url) && rssFeedStorage.isRssFeedEnabled(url) && !feedViewModel.isUrlLoaded(url)) {
+                    RssFeedFetcher.fetchAndParseRssFeed(url) { rssFeed ->
+                        processFetchedRssFeed(rssFeed, url)
                     }
                 }
-                completedRssFetches++
-                Log.d("RssFeedFetched", completedRssFetches.toString())
+
+                if(completedRssFetches >= totalFeeds) {
+                    withContext(Dispatchers.IO) {
+                        updateCompletionStatus(completedRssFetches, totalFeeds)
+                    }
+                }
             }
-            updateCompletionStatus(completedRssFetches, totalFeeds)
         }
-        updateCompletionStatus(completedRssFetches, 0)
     }
 
-    private fun processFetchedRssFeed(rssFeed: RssFeed?, url: String, seenArticleUrls: MutableSet<String>) {
+    private fun processFetchedRssFeed(rssFeed: RssFeed?, url: String) {
         var iconUrl = rssFeedStorage.getIcon(url)
         if (iconUrl == null && rssFeed?.channel?.items?.isNotEmpty() == true) {
             RssFeedFetcher.getPageIcon(rssFeed.channel!!.items?.get(0)?.link) {
@@ -127,67 +127,19 @@ class FeedFragment : Fragment() {
             }
         }
 
-        val itemsToAdd = rssFeed?.channel?.items?.mapNotNull { item ->
-            if (seenArticleUrls.add(item.link)) {
-                RssFeedItem(
-                    item.title,
-                    rssFeed.channel!!.title,
-                    item.description,
-                    item.pubDate,
-                    iconUrl,
-                    item.link
-                )
-            } else null
+        val itemsToAdd = rssFeed?.channel?.items?.map { item ->
+            RssFeedItem(
+                item.title,
+                rssFeed.channel!!.title,
+                item.description,
+                item.pubDate,
+                iconUrl,
+                item.link
+            )
         }.orEmpty()
 
         feedViewModel.updateRssFeedItems(url, itemsToAdd)
     }
-
-    /*private fun loadFeedData(imageViewToRotate: ImageView, statusMessage: TextView) {
-        var completedRssFetches = 0
-        val totalFeeds = rssFeedStorage.getRssFeedUrls().size
-
-        val seenArticleUrls = mutableSetOf<String>()
-        for (url in rssFeedStorage.getRssFeedUrls()) {
-            if (!feedViewModel.isUrlLoaded(url) && rssFeedStorage.isRssFeedEnabled(url)) {
-                RssFeedFetcher.fetchAndParseRssFeed(url) { rssFeed: RssFeed? ->
-                    var iconUrl = rssFeedStorage.getIcon(url)
-                    if(iconUrl == null) {
-                        RssFeedFetcher.getPageIcon(rssFeed?.channel?.items?.get(0)?.link) {
-                            iconUrl = it
-                            if (it != null) {
-                                rssFeedStorage.setIcon(url, it)
-                            }
-                        }
-                    }
-
-                    val itemsToAdd = mutableListOf<RssFeedItem>()
-                    rssFeed?.channel?.items?.forEach { item ->
-                        if (seenArticleUrls.add(item.link)) {
-                            itemsToAdd.add(
-                                RssFeedItem(
-                                    item.title,
-                                    rssFeed.channel!!.title,
-                                    item.description,
-                                    item.pubDate,
-                                    iconUrl,
-                                    item.link
-                                )
-                            )
-                        }
-                    }
-                    feedViewModel.updateRssFeedItems(url, itemsToAdd)
-
-                    updateCompletionStatus(++completedRssFetches, totalFeeds, imageViewToRotate, statusMessage)
-                }
-            } else {
-                updateCompletionStatus(++completedRssFetches, totalFeeds, imageViewToRotate, statusMessage)
-                if (!rssFeedStorage.isRssFeedEnabled(url)) {
-                    feedViewModel.removeItemsFromUrl(url)
-                }
-            }
-        }
-    }*/
 
     private fun startRotationAnimation(imageView: ImageView) {
         imageView.animate()
@@ -197,7 +149,6 @@ class FeedFragment : Fragment() {
     }
 
     private fun updateCompletionStatus(completedRssFetches: Int, totalFeeds: Int) {
-        Log.d("updateCompletionStatus", completedRssFetches.toString() + " " + totalFeeds.toString());
         if (completedRssFetches >= totalFeeds) {
             val imageViewToRotate: ImageView? = view?.findViewById(R.id.LoadingIcon)
             val statusMessage: TextView? = view?.findViewById(R.id.StatusMessage)
@@ -207,11 +158,8 @@ class FeedFragment : Fragment() {
     }
 
     private fun onUserPreferencesChanged() {
-        Log.d("RssFeed", "Refresh Feed - Load new values")
         adapter!!.clearData()
         feedViewModel.refreshFeed()
-        Log.d("RssFeed", "Here")
-        //loadFeedDataWithCoroutines()
     }
 
     override fun onDestroyView() {

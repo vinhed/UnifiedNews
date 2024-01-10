@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -136,6 +137,7 @@ class BookmarkExtendableListAdapter (
 
         if (item.imageUrl != null) {
             if (convertView != null) {
+                Log.d("getChildView", item.imageUrl)
                 Glide.with(convertView.context)
                     .load(item.imageUrl)
                     .into(iconView)

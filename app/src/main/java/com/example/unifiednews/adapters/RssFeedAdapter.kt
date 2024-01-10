@@ -55,8 +55,8 @@ class RssFeedAdapter(
         return html.replace(Regex("<[^>]*>"), "").trim()
     }
 
-    fun updateData(newItems: List<RssFeedItem>) {
-        rssFeedItems = newItems.sortedWith { item1, item2 ->
+    fun updateAndSortData(newItems: List<RssFeedItem>) {
+        rssFeedItems = newItems /*.sortedWith { item1, item2 ->
             val date1 = item1.dateTime?.let { parseDate(it) }
             val date2 = item2.dateTime?.let { parseDate(it) }
 
@@ -66,7 +66,7 @@ class RssFeedAdapter(
                 date2 == null -> -1
                 else -> date2.compareTo(date1)
             }
-        }
+        }*/
         notifyDataSetChanged()
     }
 
