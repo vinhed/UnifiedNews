@@ -14,7 +14,10 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.unifiednews.R
+import com.example.unifiednews.data.RssFeedItem
+import com.example.unifiednews.data.RssFilterItem
 import com.example.unifiednews.repository.RssFeedStorage
 import com.example.unifiednews.ui.feed.SharedViewModel
 import kotlin.math.log
@@ -52,27 +55,17 @@ class CustomExpandableListAdapter(
     ): View {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val view =
-            convertView ?: inflater.inflate(R.layout.recycler_view_filter_item, parent, false)
-
-        // Assuming the folder name is to be displayed in the 'Header' TextView
-        val folderNameTextView = view.findViewById<TextView>(R.id.Header)
-        folderNameTextView.text = folderListArray[groupPosition]
+            convertView ?: inflater.inflate(R.layout.group_item, parent, false)
+        val folderNameText = view.findViewById<TextView>(R.id.tvGroup)
+        folderNameText.text = folderListArray[groupPosition]
+        /*val folderNameTextView = view.findViewById<TextView>(R.id.Header)
+        folderNameTextView.text =
 
         val folderSwitch = view.findViewById<Switch>(R.id.folderSwitch)
         folderSwitch.visibility = View.VISIBLE
         folderSwitch.isFocusable = false
         folderSwitch.isClickable = true
-
-        // You can still set an OnCheckedChangeListener to perform actions
-        // when the switch's checked state changes
-
-        // Hide or adjust other views (like CheckBox, ImageView, etc.) as per your need
-        val checkBox = view.findViewById<CheckBox>(R.id.checkBox)
-        val descriptionTextView = view.findViewById<TextView>(R.id.Description)
-        val moreButton = view.findViewById<ImageButton>(R.id.moreButton)
-        moreButton.visibility = View.GONE
-        checkBox.visibility = View.GONE
-        descriptionTextView.visibility = View.GONE
+*/
 
         return view
     }
@@ -97,8 +90,50 @@ class CustomExpandableListAdapter(
         convertView: View?,
         parent: ViewGroup?
     ): View {
+        val item = getChild(groupPosition, childPosition) as RssFilterItem
+        val layoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val view = layoutInflater.inflate(R.layout.recycler_view_filter_item, null)
 
-        var view: View? = convertView
+        val header: TextView = view.findViewById(R.id.Header)
+        val description: TextView = view.findViewById(R.id.Description)
+        val removeButton: ImageButton = view.findViewById(R.id.moreButton)
+        removeButton.setImageResource(R.drawable.remove)
+        val checkBox: CheckBox = view.findViewById(R.id.checkBox)
+        val image: ImageView = view.findViewById(R.id.imageView2)
+        header.text = item.header
+        description.text = item.description
+
+        removeButton.setOnClickListener{
+            Log.d("DELETETHIS SHIT", "BRÖ")
+        }
+        if (item.image != null) {
+            if (convertView != null) {
+                Glide.with(convertView.context)
+                    .load(item.image)
+                    .into(image)
+            }
+        }
+        return view
+        /*
+        val view: View = if (convertView == null || convertView.tag != groupPosition) {
+            // Inflate a new layout if we don't have a recycled view or if it's not tagged with the correct group position
+            LayoutInflater.from(context).inflate(R.layout.layout_child_recyclerview, parent, false).apply {
+                // Tag this view with the group position so we can identify it during recycling
+                tag = groupPosition
+            }
+        } else {
+            convertView
+        }
+
+        val recyclerView = view.findViewById<RecyclerView>(R.id.childRecyclerView)
+        // Check if we need to initialize or update the RecyclerView adapter
+        if (recyclerView.adapter == null || view.tag != groupPosition) {
+            initializeRecyclerViewAdapter(recyclerView, groupPosition)
+            lastChildBool = isLastChild
+        }
+
+        return view*/
+       /* var view: View? = convertView
         if (groupPosition == groupPos) {
             if (view == null) {
                 return View(context).apply {
@@ -128,7 +163,47 @@ class CustomExpandableListAdapter(
         if (lastChildBool) {
             groupPos = groupPosition
         }
-        return view ?: View(context) // Return the view or a default view to avoid null
+        return view ?: View(context) // Return the view or a default view to avoid null*/
+
+        /*val view: View
+        Log.d("COUNTER1", groupPos.toString() + " " + groupPosition)
+        if (groupPosition == groupPos) {
+            if (convertView != null) {
+                Log.d("convertView", convertView.toString())
+                return convertView
+            }
+            Log.d("ZEROVIEW", convertView.toString())
+            return View(context).apply {
+                layoutParams = ViewGroup.LayoutParams(0, 0) // Zero size
+
+            }
+        } else if (lastChildBool) {
+            lastChildBool = false
+        }
+        if (convertView == null  ) {
+
+            if (!lastChildBool) {
+                view = LayoutInflater.from(context).inflate(R.layout.layout_child_recyclerview, parent, false)
+                val recyclerView = view.findViewById<RecyclerView>(R.id.childRecyclerView)
+
+                initializeRecyclerViewAdapter(recyclerView, groupPosition)
+                lastChildBool = isLastChild
+                Log.d("COUNTER2", lastChildBool.toString())
+            } else {
+                view = View(context).apply {
+                    layoutParams = ViewGroup.LayoutParams(0, 0) // Zero size
+                }
+            }
+
+        } else {
+
+            view = convertView
+        }
+        if (lastChildBool) groupPos = groupPosition
+
+        return view*/
+
+
     }
 
     private fun initializeRecyclerViewAdapter(recyclerView: RecyclerView, groupPosition: Int) {
@@ -137,6 +212,7 @@ class CustomExpandableListAdapter(
 
         Log.d("SNELA", "Initializing RecyclerView for folder: $folderName with URLs: $rssFeedUrls")
 
+        if (false) {
         val adapter = RssFilterAdapter(
             rssFeedUrls,
             rssFeedStorage,
@@ -151,7 +227,7 @@ class CustomExpandableListAdapter(
         }
         updateFolders(rssFeedsMap)
         recyclerView.layoutManager = LinearLayoutManager(context)
-        recyclerView.adapter = adapter
+        recyclerView.adapter = adapter}
     }
 
     override fun getChildId(groupPosition: Int, childPosition: Int): Long {
