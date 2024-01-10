@@ -2,13 +2,17 @@ package com.example.unifiednews.adapters
 
 import android.annotation.SuppressLint
 import android.content.res.ColorStateList
+import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContentProviderCompat.requireContext
@@ -17,12 +21,19 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.unifiednews.R
 import com.example.unifiednews.data.RssFeedItem
+import com.example.unifiednews.repository.RssFeedStorage
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView.Adapter<RssFeedAdapter.ViewHolder>() {
+class RssFeedAdapter(
+    private var rssFeedItems: List<RssFeedItem>,
+    private val webView: WebView,
+    private val webViewTopBar: LinearLayout,
+    private val webViewTopBarText: TextView,
+    private val rssFeedStorage: RssFeedStorage
+) : RecyclerView.Adapter<RssFeedAdapter.ViewHolder>() {
 
     private fun parseDate(dateString: String): Date? {
         val formats = arrayOf(
@@ -45,7 +56,7 @@ class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView
     }
 
     fun updateData(newItems: List<RssFeedItem>) {
-        rssFeedItems = newItems.sortedWith(Comparator { item1, item2 ->
+        rssFeedItems = newItems.sortedWith { item1, item2 ->
             val date1 = item1.dateTime?.let { parseDate(it) }
             val date2 = item2.dateTime?.let { parseDate(it) }
 
@@ -55,7 +66,7 @@ class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView
                 date2 == null -> -1
                 else -> date2.compareTo(date1)
             }
-        })
+        }
         notifyDataSetChanged()
     }
 
@@ -80,7 +91,7 @@ class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView
         val dateTime: TextView = view.findViewById(R.id.DateTime)
         val iconView: ImageView = view.findViewById(R.id.Icon)
         val container: ConstraintLayout = view.findViewById(R.id.Container)
-        //val webView: WebView = view.findViewById(R.id.webView)
+        val bookmarkButton: ImageButton = view.findViewById(R.id.bookmarkButton)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -95,6 +106,27 @@ class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView
         holder.description.text = item.description?.let { stripHtml(it) }
         holder.dateTime.text = formatDate(item.dateTime?.let { parseDate(it) })
 
+        item.dateTime?.let {
+            item.header?.let { it1 ->
+                if(rssFeedStorage.isBookmarked(it1, it)) {
+                    holder.bookmarkButton.tag = "bookmarked"
+                    holder.bookmarkButton.setImageResource(R.drawable.bookmark_added)
+                }
+            }
+        }
+
+        holder.bookmarkButton.setOnClickListener {
+            if(holder.bookmarkButton.tag == "not_bookmarked") {
+                holder.bookmarkButton.setImageResource(R.drawable.bookmark_added)
+                holder.bookmarkButton.tag = "bookmarked"
+                rssFeedStorage.addBookmarkItem(item)
+            } else {
+                holder.bookmarkButton.setImageResource(R.drawable.bookmark)
+                holder.bookmarkButton.tag = "not_bookmarked"
+                rssFeedStorage.removeBookmarkItem(item)
+            }
+        }
+
         if (item.imageUrl != null) {
             Glide.with(holder.itemView.context)
                 .load(item.imageUrl)
@@ -103,8 +135,10 @@ class RssFeedAdapter(private var rssFeedItems: List<RssFeedItem>) : RecyclerView
 
         holder.container.setOnClickListener {
             holder.container.setBackgroundResource(R.drawable.rounded_panel_focus)
-            //item.link?.let { it1 -> holder.webView.loadUrl(it1) }
-            //holder.webView.visibility = View.VISIBLE
+            item.link?.let { it1 -> webView.loadUrl(it1) }
+            webView.visibility = View.VISIBLE
+            webViewTopBar.visibility = View.VISIBLE
+            webViewTopBarText.text = holder.publisher.text.toString()
             Handler(Looper.getMainLooper()).postDelayed({
                 holder.container.setBackgroundResource(R.drawable.rounded_panel)
             }, 500)

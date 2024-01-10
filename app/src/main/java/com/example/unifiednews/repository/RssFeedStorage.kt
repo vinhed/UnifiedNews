@@ -4,16 +4,45 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.example.unifiednews.data.RssFeedItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
 class RssFeedStorage(application: Application) {
 
-    private val prefs: SharedPreferences =
-        application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val gson = Gson()
 
+    private fun storeBookmarkList(list: List<RssFeedItem>) {
+        val jsonString = gson.toJson(list)
+        prefs.edit().putString("rssFeedBookmarkList", jsonString).apply()
+    }
 
+    fun getBookmarkList(): List<RssFeedItem> {
+        val jsonString = prefs.getString("rssFeedBookmarkList", null)
+        return if (jsonString != null) {
+            val type = object : TypeToken<List<RssFeedItem>>() {}.type
+            gson.fromJson(jsonString, type)
+        } else {
+            emptyList()
+        }
+    }
+
+    fun isBookmarked(header: String, dateTime: String): Boolean {
+        return getBookmarkList().any { item -> item.header == header && item.dateTime == dateTime }
+    }
+
+    fun addBookmarkItem(item: RssFeedItem) {
+        val currentList = getBookmarkList().toMutableList()
+        currentList.add(item)
+        storeBookmarkList(currentList)
+    }
+
+    fun removeBookmarkItem(item: RssFeedItem) {
+        val currentList = getBookmarkList().toMutableList()
+        currentList.remove(item)
+        storeBookmarkList(currentList)
+    }
 
     fun setIcon(url: String, iconUrl: String) {
         prefs.edit().putString("ICON$url", iconUrl).apply()

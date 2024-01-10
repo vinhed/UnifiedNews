@@ -68,20 +68,17 @@ class CustomExpandableListAdapter(
 
         // Hide or adjust other views (like CheckBox, ImageView, etc.) as per your need
         val checkBox = view.findViewById<CheckBox>(R.id.checkBox)
-        val imageView = view.findViewById<ImageView>(R.id.imageView2)
         val descriptionTextView = view.findViewById<TextView>(R.id.Description)
         val moreButton = view.findViewById<ImageButton>(R.id.moreButton)
         moreButton.visibility = View.GONE
-        checkBox.visibility = View.GONE // For example, hiding the checkbox
+        checkBox.visibility = View.GONE
         descriptionTextView.visibility = View.GONE
-        // Set up other views as needed
 
         return view
     }
 
 
     override fun getChildrenCount(groupPosition: Int): Int {
-
         return rssFeedsMap[folderListArray[groupPosition]]?.size ?: 0
     }
 
@@ -100,6 +97,7 @@ class CustomExpandableListAdapter(
         convertView: View?,
         parent: ViewGroup?
     ): View {
+
         var view: View? = convertView
         if (groupPosition == groupPos) {
             if (view == null) {
@@ -110,6 +108,7 @@ class CustomExpandableListAdapter(
 
         } else if (lastChildBool) {
             lastChildBool = false
+
         }
         if (view == null) {
             Log.d("AVRFÖR", groupPosition.toString() + " "  + groupPos + " " + lastChildBool.toString())

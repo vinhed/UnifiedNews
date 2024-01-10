@@ -1,6 +1,6 @@
 package com.example.unifiednews.data
 
-data class RssFeedItem(
+data class RssFeedItem (
     val header: String?,
     val publisher: String?,
     val description: String?,

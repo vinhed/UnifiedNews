@@ -104,6 +104,7 @@ class FilterFragment : Fragment() {
         val expandableListView = binding.root.findViewById<ExpandableListView>(R.id.expandableListView)
         val foldersMap = rssFeedStorage.getFoldersMap()
 
+
         expandableListAdapter = CustomExpandableListAdapter(requireContext(), foldersMap.keys, foldersMap, rssFeedStorage, sharedViewModel)
         expandableListAdapter.onChildMoreButtonClicked = { url, position, folderName ->
             Log.d("CONTEXT", "CUM")

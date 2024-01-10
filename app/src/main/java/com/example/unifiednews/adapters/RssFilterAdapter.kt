@@ -29,6 +29,8 @@ class RssFilterAdapter(var rssFeedList: List<String>,
                        private val folderName: String,
                        private val sharedViewModel: SharedViewModel) : RecyclerView.Adapter<RssFilterAdapter.ViewHolder>() {
 
+    private val alreadySeen: MutableList<String> = mutableListOf();
+
     interface OnItemRemovedListener {
         fun onItemRemoved(rssFeedMap:Map<String, List<String>>)
     }
@@ -116,6 +118,7 @@ class RssFilterAdapter(var rssFeedList: List<String>,
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val rssFeedUrl = rssFeedList[position]
 
+        fetchRssFeed(rssFeedUrl, holder)
 
         holder.checkBox.setOnCheckedChangeListener(null)
         holder.checkBox.isChecked = RssFeedStateManager.isRssFeedEnabled(rssFeedUrl)
