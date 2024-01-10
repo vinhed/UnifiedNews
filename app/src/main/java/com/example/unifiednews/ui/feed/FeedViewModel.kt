@@ -75,7 +75,7 @@ class FeedViewModel : ViewModel() {
         finalList.addAll(currentItems.subList(currentIndex, currentItems.size))
         finalList.addAll(sortedNewItems.subList(newIndex, sortedNewItems.size))
 
-        _rssFeedItems.postValue(finalList.subList(0, min(100, finalList.size)))
+        _rssFeedItems.postValue(finalList)
 
         completionCheck(totalFeeds, completionCallback)
     }

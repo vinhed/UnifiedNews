@@ -99,6 +99,7 @@ class FeedFragment : Fragment() {
 
     private fun resetCompletion(forceReload: Boolean) {
         _binding?.swipeRefreshLayout?.isRefreshing = true
+        if(forceReload) feedViewModel.refreshFeed()
         loadFeedDataWithCoroutines(forceReload)
     }
 
