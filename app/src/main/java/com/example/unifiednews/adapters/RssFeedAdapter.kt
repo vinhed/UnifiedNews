@@ -22,6 +22,7 @@ import com.bumptech.glide.Glide
 import com.example.unifiednews.R
 import com.example.unifiednews.data.RssFeedItem
 import com.example.unifiednews.repository.RssFeedStorage
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -32,7 +33,8 @@ class RssFeedAdapter(
     private val webView: WebView,
     private val webViewTopBar: LinearLayout,
     private val webViewTopBarText: TextView,
-    private val rssFeedStorage: RssFeedStorage
+    private val bottomSheet: LinearLayout,
+    private val rssFeedStorage: RssFeedStorage,
 ) : RecyclerView.Adapter<RssFeedAdapter.ViewHolder>() {
 
     private fun parseDate(dateString: String): Date? {
@@ -56,17 +58,7 @@ class RssFeedAdapter(
     }
 
     fun updateAndSortData(newItems: List<RssFeedItem>) {
-        rssFeedItems = newItems /*.sortedWith { item1, item2 ->
-            val date1 = item1.dateTime?.let { parseDate(it) }
-            val date2 = item2.dateTime?.let { parseDate(it) }
-
-            when {
-                date1 == null && date2 == null -> 0
-                date1 == null -> 1
-                date2 == null -> -1
-                else -> date2.compareTo(date1)
-            }
-        }*/
+        rssFeedItems = newItems
         notifyDataSetChanged()
     }
 
@@ -136,9 +128,11 @@ class RssFeedAdapter(
         holder.container.setOnClickListener {
             holder.container.setBackgroundResource(R.drawable.rounded_panel_focus)
             item.link?.let { it1 -> webView.loadUrl(it1) }
-            webView.visibility = View.VISIBLE
+            /*webView.visibility = View.VISIBLE
             webViewTopBar.visibility = View.VISIBLE
-            webViewTopBarText.text = holder.publisher.text.toString()
+            webViewTopBarText.text = holder.publisher.text.toString()*/
+            val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
             Handler(Looper.getMainLooper()).postDelayed({
                 holder.container.setBackgroundResource(R.drawable.rounded_panel)
             }, 500)
