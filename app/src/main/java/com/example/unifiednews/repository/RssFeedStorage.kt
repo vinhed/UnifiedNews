@@ -159,7 +159,6 @@ class RssFeedStorage(application: Application) {
 
     fun setSwitchBoolToFolder(folderName: String, boolean: Boolean) {
         val switchMap = getFoldersSwitchBools().toMutableMap()
-        Log.d("BOOOOL", boolean.toString() + " " + switchMap.toString())
 
         switchMap[folderName] = boolean
         val switchMapString = gson.toJson(switchMap)
@@ -184,7 +183,6 @@ class RssFeedStorage(application: Application) {
 
     fun getFolders(): List<String> {
         val foldersMap = getFoldersMap().toMutableMap()
-        Log.d("FOLDERSMAP", foldersMap.toString())
         return foldersMap.keys.toList()
     }
 
@@ -214,7 +212,6 @@ class RssFeedStorage(application: Application) {
 
     fun removeRssInFolder(folderName: String, url: String?, position: Int): Boolean {
         val foldersMap = getFoldersMap().toMutableMap()
-        Log.d("BEFOREREMOVE", foldersMap.toString())
         foldersMap[folderName]?.let { folderUrls ->
             if (url in folderUrls) {
                 val mutableFolderUrls = folderUrls.toMutableList()
@@ -228,18 +225,35 @@ class RssFeedStorage(application: Application) {
 
         return false
     }
+    fun removeFolder(folderName: String): Boolean {
+        val foldersMap = getFoldersMap().toMutableMap()
 
+        if (foldersMap.containsKey(folderName)) {
+            foldersMap.remove(folderName)
+            saveFoldersMap(foldersMap)
+            removeSwitchStateForFolder(folderName)
+
+            return true
+        }
+
+        return false
+    }
+
+    private fun removeSwitchStateForFolder(folderName: String) {
+        val switchMap = getFoldersSwitchBools().toMutableMap()
+        switchMap.remove(folderName)
+        val switchMapString = gson.toJson(switchMap)
+        prefs.edit().putString(FOLDER_SWITCH_KEY, switchMapString).apply()
+    }
     fun removeRssInFolders(url: String) {
         val foldersMap = getFoldersMap().toMutableMap()
         for ((key, urls) in foldersMap) {
-            Log.d("urls", urls.toString())
             if (url in urls) {
                 val updatedUrls = urls.toMutableList()
                 updatedUrls.remove(url)
                 foldersMap[key] = updatedUrls
             }
         }
-        Log.d(foldersMap.toString(), "FULDER")
         val foldersMapString = gson.toJson(foldersMap)
         prefs.edit().putString(FOLDERS_KEY, foldersMapString).apply()
 

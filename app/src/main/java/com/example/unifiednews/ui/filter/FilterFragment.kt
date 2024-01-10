@@ -1,5 +1,6 @@
 package com.example.unifiednews.ui.filter
 
+import android.app.AlertDialog
 import android.app.Application
 import android.content.Context
 import android.content.res.ColorStateList
@@ -65,7 +66,6 @@ class FilterFragment : Fragment() {
         }
         sharedViewModel.rssFeedChanged.observe(viewLifecycleOwner) {
             if (it) {
-                // Refresh adapters to reflect the state changes
                 expandableListAdapter.notifyDataSetChanged()
                 rssFilterAdapter.notifyDataSetChanged()
             }
@@ -117,23 +117,40 @@ class FilterFragment : Fragment() {
 
         expandableListAdapter = CustomExpandableListAdapter(requireContext(), foldersMap.keys, foldersMap, rssFeedStorage, sharedViewModel)
         expandableListAdapter.onChildMoreButtonClicked = { url, position, folderName ->
-            Log.d("CONTEXT", "CUM")
-            Log.d("FÖLD", folderName)
             val context = _binding?.root?.context
             if (context != null) {
                 filterViewModel.removeRssFromFolder(folderName, url, position)
-                Log.d("FÖLD", folderName)
 
             } else {
-                // Handle the case where context is null
-                // For example, show an error message or log an error
+                Log.e("DO NOT WURK", "WALLA")
             }
-            //onItemRemovedListener = expandableListAdapter
+        }
+        expandableListAdapter.onFolderLongPressed = { folderName, position ->
+            showDeleteConfirmationDialog(folderName, position)
         }
         expandableListView.setAdapter(expandableListAdapter)
     }
 
+    private fun showDeleteConfirmationDialog(folderName: String, position: Int) {
+        AlertDialog.Builder(context)
+            .setTitle("Delete Folder")
+            .setMessage("Are you sure you want to delete the folder '$folderName'?")
+            .setPositiveButton("Delete") { dialog, which ->
+                deleteFolder(folderName)
 
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteFolder(folderName: String) {
+
+        if (filterViewModel.removeFolder(folderName))Toast.makeText(context, "Success in deleting $folderName", Toast.LENGTH_SHORT).show()
+        val updatedFoldersMap = rssFeedStorage.getFoldersMap()
+        Log.d("UPDATEDFOLDERS", updatedFoldersMap.toString())
+        expandableListAdapter.updateFolders(updatedFoldersMap)
+        expandableListAdapter.notifyDataSetChanged()
+    }
     private fun setInvalidColors() {
         val colorError = ContextCompat.getColor(requireContext(), R.color.ErrorCode)
         _binding!!.rssInputLayout.apply {

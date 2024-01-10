@@ -7,7 +7,6 @@ import com.example.unifiednews.repository.RssFeedStorage
 class FilterViewModel(application: Application) : AndroidViewModel(application) {
     private val rssFeedStorage = RssFeedStorage(application)
     fun saveFolder(folderName: String):Boolean {
-        Log.d(folderName, "folderName")
 
         return rssFeedStorage.saveFolderToFolders(folderName)
     }
@@ -17,6 +16,9 @@ class FilterViewModel(application: Application) : AndroidViewModel(application) 
     }
     fun removeRssFromFolder(folderName: String, url: String?, position: Int): Boolean {
         return rssFeedStorage.removeRssInFolder(folderName, url, position)
+    }
+    fun removeFolder(folderName: String): Boolean {
+        return rssFeedStorage.removeFolder(folderName)
     }
 
 

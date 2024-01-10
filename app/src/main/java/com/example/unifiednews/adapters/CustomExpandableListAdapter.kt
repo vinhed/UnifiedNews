@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseExpandableListAdapter;
 import android.widget.CheckBox
+import android.widget.ExpandableListView
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Switch
@@ -29,13 +30,11 @@ class CustomExpandableListAdapter(
     private var rssFeedsMap: Map<String, List<String>>,
     private var rssFeedStorage: RssFeedStorage,
     private val sharedViewModel: SharedViewModel,
-    private var groupPos: Int = -1,
-    private var lastChildBool: Boolean = false
-
 
 ) : BaseExpandableListAdapter(), RssFilterAdapter.OnItemRemovedListener {
     private var folderListArray = folderList.toTypedArray()
     var onChildMoreButtonClicked: ((String?, Int, String) -> Unit)? = null
+    var onFolderLongPressed: ((String, Int) -> Unit)? = null
     override fun getGroup(groupPosition: Int): Any {
         return folderListArray[groupPosition]
     }
@@ -59,9 +58,7 @@ class CustomExpandableListAdapter(
             convertView ?: inflater.inflate(R.layout.group_item, parent, false)
         val folderNameText = view.findViewById<TextView>(R.id.tvGroup)
         folderNameText.text = folderListArray[groupPosition]
-        /*val folderNameTextView = view.findViewById<TextView>(R.id.Header)
-        folderNameTextView.text =
-*/
+
         val folderName = folderListArray[groupPosition]
         val folderSwitch = view.findViewById<Switch>(R.id.folderSwitch2)
         folderSwitch.visibility = View.VISIBLE
@@ -80,7 +77,16 @@ class CustomExpandableListAdapter(
                 }
             }
         }
+        view.setOnClickListener {
 
+            val listView = parent as ExpandableListView
+            if (isExpanded) listView.collapseGroup(groupPosition)
+            else listView.expandGroup(groupPosition, true)
+        }
+        view.setOnLongClickListener {
+            onFolderLongPressed?.invoke(folderName, groupPosition)
+            true
+        }
         return view
     }
 
@@ -128,7 +134,6 @@ class CustomExpandableListAdapter(
             RssFeedStateManager.setRssFeedState(description.text as String, checkBox.isChecked)
             rssFeedStorage.setRssFeedState(description.text as String, checkBox.isChecked)
             sharedViewModel.notifyRssFeedChanged()
-            Log.d("CYKA", RssFeedStateManager.getCheckedStates().toString())
         }
 
         if (convertView != null) {
@@ -159,7 +164,6 @@ class CustomExpandableListAdapter(
 
 
     override fun onItemRemoved(rssFeedMap: Map<String, List<String>>) {
-        Log.d("GETTING TO REMOVED", rssFeedMap.toString())
         rssFeedsMap = rssFeedMap
     }
 

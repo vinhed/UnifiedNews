@@ -110,13 +110,6 @@ class RssFilterAdapter(var rssFeedList: List<String>,
             }
         }.start()
     }
-    fun toggleAllCheckboxes(checked: Boolean) {
-        rssFeedList.forEach { url ->
-            RssFeedStateManager.setRssFeedState(url, checked)
-            rssFeedStorage.setRssFeedState(url, checked)
-        }
-        notifyDataSetChanged() // Notify adapter of data change
-    }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val checkBox: CheckBox = view.findViewById(R.id.checkBox)
@@ -143,12 +136,10 @@ class RssFilterAdapter(var rssFeedList: List<String>,
         holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
             RssFeedStateManager.setRssFeedState(rssFeedUrl, isChecked)
             rssFeedStorage.setRssFeedState(rssFeedUrl, isChecked)
-            Log.d("ISITCHECKING", rssFeedStorage.getRssFeedState().toString())
             sharedViewModel.notifyRssFeedChanged()
         }
         if (!isChildAdapter) {
 
-            Log.d("Debug", "Binding view for URL: $rssFeedUrl at position $position")
         }
         if (isChildAdapter) {
             holder.moreButton.setImageResource(R.drawable.remove)
@@ -156,7 +147,6 @@ class RssFilterAdapter(var rssFeedList: List<String>,
             holder.moreButton.setImageResource(R.drawable.more_vert)
         }
         holder.moreButton.setOnClickListener {
-            Log.d("APA", position.toString())
             onMoreButtonClicked?.invoke(rssFeedUrl, position)
         }
     }
@@ -171,7 +161,6 @@ class RssFilterAdapter(var rssFeedList: List<String>,
         rssFeedStorage.removeRssFeedUrl(url)
         rssFeedStorage.removeRssInFolders(url)
         val map = rssFeedStorage.getFoldersMap()
-        Log.d("map", map.toString())
         onItemRemovedListener?.onItemRemoved(map)
         rssFeedStorage.removeFilterItem(url)
     }
