@@ -24,12 +24,15 @@ import com.example.unifiednews.data.RssFeedItem
 import com.example.unifiednews.databinding.FragmentFeedBinding
 import com.example.unifiednews.repository.RssFeed
 import com.example.unifiednews.repository.RssFeedFetcher
+import com.example.unifiednews.repository.RssFeedFetcher.fetchAndParseRssFeedAsync
 import com.example.unifiednews.repository.RssFeedStorage
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -74,16 +77,11 @@ class FeedFragment : Fragment() {
         )
         recyclerView.adapter = adapter
         val bottomSheetBehavior = _binding?.bottomSheet?.let { BottomSheetBehavior.from(it) }
-        //val behavior = BottomSheetBehavior.from(binding.bottomSheet) as CustomBottomSheetBehavior
-        //val dragHandle = view.findViewById<View>(R.id.dragHandle)
-        //behavior.setDraggableHandle(dragHandle)
+        val behavior = BottomSheetBehavior.from(binding.bottomSheet) as CustomBottomSheetBehavior
+        val dragHandle = view.findViewById<View>(R.id.dragHandle)
+        behavior.setDraggableHandle(dragHandle)
         bottomSheetBehavior?.state = BottomSheetBehavior.STATE_COLLAPSED
         bottomSheetBehavior?.peekHeight = 0
-
-        _binding?.closeWebViewButton?.setOnClickListener {
-            _binding?.webViewTopBar?.visibility = View.INVISIBLE
-            _binding?.webView?.visibility  = View.INVISIBLE
-        }
 
         feedViewModel.rssFeedItems.observe(viewLifecycleOwner) { items ->
             coroutineScope.launch {
@@ -102,26 +100,29 @@ class FeedFragment : Fragment() {
             resetCompletion(true)
         }
 
-        feedViewModel.resetCompletionStatus()
         resetCompletion(false)
     }
 
     private fun resetCompletion(forceReload: Boolean) {
+        feedViewModel.resetCompletionStatus()
         _binding?.swipeRefreshLayout?.isRefreshing = true
         if(forceReload) feedViewModel.refreshFeed()
         loadFeedDataWithCoroutines(forceReload)
     }
 
     private fun loadFeedDataWithCoroutines(forceReload: Boolean) {
-        coroutineScope.launch {
+        coroutineScope.launch(Dispatchers.IO) {
             val seenArticleUrls = mutableSetOf<String>()
             rssFeedStorage.getRssFeedUrls().forEach { url ->
                 if(!seenArticleUrls.contains(url) && rssFeedStorage.isRssFeedEnabled(url) && (!feedViewModel.isUrlLoaded(url) || forceReload)) {
-                    RssFeedFetcher.fetchAndParseRssFeed(url) { rssFeed ->
+                    val rssFeed = fetchAndParseRssFeedAsync(url)
+                    withContext(Dispatchers.Main) {
                         processFetchedRssFeed(rssFeed, url)
                     }
                 } else {
-                    feedViewModel.completionCheck(rssFeedStorage.getRssFeedUrls().size) { updateCompletionStatus() }
+                    withContext(Dispatchers.Main) {
+                        feedViewModel.completionCheck(rssFeedStorage.getRssFeedUrls().size) { updateCompletionStatus() }
+                    }
                 }
             }
         }

@@ -55,7 +55,7 @@
             android:background="@color/BackgroundColor"
             android:gravity="end"
             android:orientation="horizontal"
-            android:visibility="invisible"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -87,15 +87,14 @@
         android:id="@+id/bottom_sheet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/BackgroundColor"
         android:orientation="vertical"
-        android:paddingTop="100dp"
-        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+        android:paddingTop="2dp"
+        app:layout_behavior="com.example.unifiednews.behavior.CustomBottomSheetBehavior"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/webViewTopBar">
-
-        <!-- WebView and other views you want inside the Bottom Sheet -->
 
         <LinearLayout
             android:id="@+id/dragHandle"
@@ -105,7 +104,7 @@
             android:background="@drawable/rounded_top"
             android:gravity="center"
             android:orientation="vertical"
-            app:layout_behavior="com.example.unifiednews.behavior.CustomBottomSheetBehavior">
+            android:paddingVertical="10dp">
 
             <ImageView
                 android:id="@+id/imageView"
@@ -121,7 +120,6 @@
             android:layout_height="match_parent"
             android:layout_weight="1" />
 
-        <!-- You can add more views here if necessary -->
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

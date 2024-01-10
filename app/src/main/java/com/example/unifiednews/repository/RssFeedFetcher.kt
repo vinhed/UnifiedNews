@@ -1,6 +1,7 @@
 package com.example.unifiednews.repository
 
 import android.util.Log
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.simpleframework.xml.Element
@@ -11,6 +12,8 @@ import org.simpleframework.xml.core.Persister
 import java.io.StringReader
 import org.jsoup.Jsoup
 import java.net.URL
+import kotlin.coroutines.resume
+
 object RssFeedFetcher {
 
     private val client = OkHttpClient()
@@ -22,6 +25,12 @@ object RssFeedFetcher {
             val rssFeed = parseXmlToRssFeed(rssFeedXml)
             callback(rssFeed)
         }.start()
+    }
+
+    suspend fun fetchAndParseRssFeedAsync(url: String): RssFeed? = suspendCancellableCoroutine { continuation ->
+        RssFeedFetcher.fetchAndParseRssFeed(url) { rssFeed ->
+            continuation.resume(rssFeed)
+        }
     }
 
     private fun fetchRssFeed(url: String): String? {

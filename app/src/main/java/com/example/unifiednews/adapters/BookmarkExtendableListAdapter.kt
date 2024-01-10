@@ -21,6 +21,7 @@ import com.google.gson.reflect.TypeToken
 import com.google.gson.Gson
 import com.example.unifiednews.R
 import com.example.unifiednews.repository.RssFeedStorage
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -33,6 +34,7 @@ class BookmarkExtendableListAdapter (
     private val webView: WebView,
     private val webViewTopBar: LinearLayout,
     private val webViewTopBarText: TextView,
+    private val bottomSheet: LinearLayout,
     private val rssFeedStorage: RssFeedStorage
 ) : BaseExpandableListAdapter() {
 
@@ -148,8 +150,8 @@ class BookmarkExtendableListAdapter (
             container.setBackgroundResource(R.drawable.rounded_panel_focus)
             item.link?.let { it1 -> webView.loadUrl(it1) }
             webView.visibility = View.VISIBLE
-            webViewTopBar.visibility = View.VISIBLE
-            webViewTopBarText.text = publisher.text.toString()
+            val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
             Handler(Looper.getMainLooper()).postDelayed({
                 container.setBackgroundResource(R.drawable.rounded_panel)
             }, 500)

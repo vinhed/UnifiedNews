@@ -50,8 +50,11 @@ class FeedViewModel : ViewModel() {
 
     fun updateRssFeedItems(url: String, newItems: List<RssFeedItem>, totalFeeds: Int, completionCallback: () -> Unit) {
         loadedUrls.add(url)
+        Log.d("updateRssFeedItems", loadedUrls.toString())
+
         val currentItems = _rssFeedItems.value.orEmpty().toMutableList()
-        val sortedNewItems = newItems.sortedByDescending { it.dateTime?.let { parseDate(it) } }
+        Log.d("updateRssFeedItems-1", currentItems.toString())
+        val sortedNewItems = newItems.sortedByDescending { it -> it.dateTime?.let { parseDate(it) } }
         val finalList = mutableListOf<RssFeedItem>()
 
         var currentIndex = 0
@@ -76,7 +79,6 @@ class FeedViewModel : ViewModel() {
         finalList.addAll(sortedNewItems.subList(newIndex, sortedNewItems.size))
 
         _rssFeedItems.postValue(finalList)
-
         completionCheck(totalFeeds, completionCallback)
     }
 

@@ -1,11 +1,13 @@
 package com.example.unifiednews.behavior
 
-import android.view.MotionEvent
-import android.view.View
+import android.content.Context
+import android.util.AttributeSet
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import android.view.MotionEvent
+import android.view.View
 
-class CustomBottomSheetBehavior<V : View> : BottomSheetBehavior<V>() {
+class CustomBottomSheetBehavior<V : View>(context: Context, attrs: AttributeSet) : BottomSheetBehavior<V>(context, attrs) {
 
     private var draggableHandle: View? = null
 
@@ -29,7 +31,6 @@ class CustomBottomSheetBehavior<V : View> : BottomSheetBehavior<V>() {
             val handleTop = handleLocation[1]
             val handleBottom = handleTop + it.height
 
-            // Check if the touch event is within the handle's bounds
             return event.rawX >= handleLeft && event.rawX <= handleRight
                     && event.rawY >= handleTop && event.rawY <= handleBottom
         }

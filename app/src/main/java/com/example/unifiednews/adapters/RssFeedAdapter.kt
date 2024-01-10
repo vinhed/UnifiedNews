@@ -128,9 +128,6 @@ class RssFeedAdapter(
         holder.container.setOnClickListener {
             holder.container.setBackgroundResource(R.drawable.rounded_panel_focus)
             item.link?.let { it1 -> webView.loadUrl(it1) }
-            /*webView.visibility = View.VISIBLE
-            webViewTopBar.visibility = View.VISIBLE
-            webViewTopBarText.text = holder.publisher.text.toString()*/
             val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
             Handler(Looper.getMainLooper()).postDelayed({
@@ -141,5 +138,4 @@ class RssFeedAdapter(
 
     override fun getItemCount() = rssFeedItems.size
 
-    // Additional methods to update the data set, etc.
 }
