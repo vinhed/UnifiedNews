@@ -21,6 +21,7 @@ import com.google.gson.reflect.TypeToken
 import com.google.gson.Gson
 import com.example.unifiednews.R
 import com.example.unifiednews.repository.RssFeedStorage
+import com.example.unifiednews.ui.bookmark.BookmarkViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -35,7 +36,7 @@ class BookmarkExtendableListAdapter (
     private val webViewTopBar: LinearLayout,
     private val webViewTopBarText: TextView,
     private val bottomSheet: LinearLayout,
-    private val rssFeedStorage: RssFeedStorage
+    private val bookmarkViewModel: BookmarkViewModel
 ) : BaseExpandableListAdapter() {
 
     private fun parseDate(dateString: String): Date? {
@@ -118,7 +119,7 @@ class BookmarkExtendableListAdapter (
 
         item.dateTime?.let {
             item.header?.let { it1 ->
-                if(rssFeedStorage.isBookmarked(it1, it)) {
+                if(bookmarkViewModel.isBookmarked(it1, it)) {
                     bookmarkButton.tag = "bookmarked"
                     bookmarkButton.setImageResource(R.drawable.bookmark_added)
                 }
@@ -129,11 +130,11 @@ class BookmarkExtendableListAdapter (
             if(bookmarkButton.tag == "not_bookmarked") {
                 bookmarkButton.setImageResource(R.drawable.bookmark_added)
                 bookmarkButton.tag = "bookmarked"
-                rssFeedStorage.addBookmarkItem(item)
+                bookmarkViewModel.addBookmarkItem(item)
             } else {
                 bookmarkButton.setImageResource(R.drawable.bookmark)
                 bookmarkButton.tag = "not_bookmarked"
-                rssFeedStorage.removeBookmarkItem(item)
+                bookmarkViewModel.removeBookmarkItem(item)
             }
         }
 

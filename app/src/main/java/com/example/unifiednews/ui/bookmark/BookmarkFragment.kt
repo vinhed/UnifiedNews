@@ -15,6 +15,7 @@ import com.example.unifiednews.behavior.CustomBottomSheetBehavior
 import com.example.unifiednews.databinding.FragmentBookmarkBinding
 import com.example.unifiednews.data.RssFeedItem
 import com.example.unifiednews.repository.RssFeedStorage
+import com.example.unifiednews.ui.feed.FeedViewModel
 import com.example.unifiednews.ui.feed.SharedViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
@@ -23,12 +24,12 @@ import com.google.gson.reflect.TypeToken
 class BookmarkFragment : Fragment() {
 
     private var _binding: FragmentBookmarkBinding? = null
-    private lateinit var rssFeedStorage: RssFeedStorage
+    private lateinit var bookmarkViewModel: BookmarkViewModel
     private val binding get() = _binding!!
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        rssFeedStorage = RssFeedStorage(context.applicationContext as Application)
+
 
     }
 
@@ -36,7 +37,7 @@ class BookmarkFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val bookmarkViewModel = ViewModelProvider(this)[BookmarkViewModel::class.java]
+        bookmarkViewModel = ViewModelProvider(this)[BookmarkViewModel::class.java]
 
         _binding = FragmentBookmarkBinding.inflate(inflater, container, false)
         val root: View = binding.root
@@ -62,7 +63,7 @@ class BookmarkFragment : Fragment() {
     }
 
     private fun setupExpandableListView() {
-        val feedItems = rssFeedStorage.getBookmarkList()
+        val feedItems = bookmarkViewModel.getBookmarkList()
         val groupedFeedItems = feedItems.groupBy { it.publisher ?: "Unknown" }
         val publishers = groupedFeedItems.keys.toList()
 
@@ -74,7 +75,7 @@ class BookmarkFragment : Fragment() {
             requireView().findViewById(R.id.webViewTopBar),
             requireView().findViewById(R.id.webViewTopbarText),
             requireView().findViewById(R.id.bottom_sheet),
-            rssFeedStorage
+            bookmarkViewModel
         )
 
         binding.expandableListView.setAdapter(adapter)

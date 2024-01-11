@@ -42,7 +42,6 @@ class FeedFragment : Fragment() {
 
     private var _binding: FragmentFeedBinding? = null
     private var adapter: RssFeedAdapter? = null
-    private lateinit var rssFeedStorage: RssFeedStorage
     private lateinit var feedViewModel: FeedViewModel
     private lateinit var sharedViewModel: SharedViewModel
     private var coroutineScope = CoroutineScope(Dispatchers.Main)
@@ -51,7 +50,7 @@ class FeedFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        rssFeedStorage = RssFeedStorage(context.applicationContext as Application)
+
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -73,7 +72,7 @@ class FeedFragment : Fragment() {
             view.findViewById(R.id.webViewTopBar),
             view.findViewById(R.id.webViewTopbarText),
             view.findViewById(R.id.bottom_sheet),
-            rssFeedStorage
+            feedViewModel
         )
         recyclerView.adapter = adapter
         val bottomSheetBehavior = _binding?.bottomSheet?.let { BottomSheetBehavior.from(it) }
@@ -113,15 +112,15 @@ class FeedFragment : Fragment() {
     private fun loadFeedDataWithCoroutines(forceReload: Boolean) {
         coroutineScope.launch(Dispatchers.IO) {
             val seenArticleUrls = mutableSetOf<String>()
-            rssFeedStorage.getRssFeedUrls().forEach { url ->
-                if(!seenArticleUrls.contains(url) && rssFeedStorage.isRssFeedEnabled(url) && (!feedViewModel.isUrlLoaded(url) || forceReload)) {
+            feedViewModel.getRssFeedUrls().forEach { url ->
+                if(!seenArticleUrls.contains(url) && feedViewModel.isRssFeedEnabled(url) && (!feedViewModel.isUrlLoaded(url) || forceReload)) {
                     val rssFeed = fetchAndParseRssFeedAsync(url)
                     withContext(Dispatchers.Main) {
                         processFetchedRssFeed(rssFeed, url)
                     }
                 } else {
                     withContext(Dispatchers.Main) {
-                        feedViewModel.completionCheck(rssFeedStorage.getRssFeedUrls().size) { updateCompletionStatus() }
+                        feedViewModel.completionCheck(feedViewModel.getRssFeedUrls().size) { updateCompletionStatus() }
                     }
                 }
             }
@@ -129,12 +128,12 @@ class FeedFragment : Fragment() {
     }
 
     private fun processFetchedRssFeed(rssFeed: RssFeed?, url: String) {
-        var iconUrl = rssFeedStorage.getIcon(url)
+        var iconUrl = feedViewModel.getIcon(url)
         if (iconUrl == null && rssFeed?.channel?.items?.isNotEmpty() == true) {
             RssFeedFetcher.getPageIcon(rssFeed.channel!!.items?.get(0)?.link) {
                 iconUrl = it
                 if (it != null) {
-                    rssFeedStorage.setIcon(url, it)
+                    feedViewModel.setIcon(url, it)
                 }
             }
         }
@@ -150,14 +149,14 @@ class FeedFragment : Fragment() {
             )
         }.orEmpty()
 
-        feedViewModel.updateRssFeedItems(url, itemsToAdd, rssFeedStorage.getRssFeedUrls().size) { updateCompletionStatus() }
+        feedViewModel.updateRssFeedItems(url, itemsToAdd, feedViewModel.getRssFeedUrls().size) { updateCompletionStatus() }
     }
 
     private fun updateCompletionStatus() {
         val formatter = DateTimeFormatter.ofPattern("dd MMM HH:mm", Locale.ENGLISH)
-        rssFeedStorage.setLastUpdate(LocalDateTime.now().format(formatter))
+        feedViewModel.setLastUpdate(LocalDateTime.now().format(formatter))
         val statusMessage: TextView? = view?.findViewById(R.id.StatusMessage)
-        statusMessage?.text = "Last Update: ${rssFeedStorage.getLastUpdate().toString()}"
+        statusMessage?.text = "Last Update: ${feedViewModel.getLastUpdate().toString()}"
         _binding?.swipeRefreshLayout?.isRefreshing = false
     }
 
@@ -171,4 +170,5 @@ class FeedFragment : Fragment() {
         _binding = null
         coroutineScope.cancel()
     }
+
 }

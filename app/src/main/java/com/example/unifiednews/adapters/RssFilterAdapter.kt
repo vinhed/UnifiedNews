@@ -19,12 +19,13 @@ import com.example.unifiednews.managers.RssFeedStateManager
 import com.example.unifiednews.repository.RssFeedFetcher
 import com.example.unifiednews.repository.RssFeedStorage
 import com.example.unifiednews.ui.feed.SharedViewModel
+import com.example.unifiednews.ui.filter.FilterViewModel
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
 
 class RssFilterAdapter(var rssFeedList: List<String>,
-                       private var rssFeedStorage: RssFeedStorage,
+                       private var filterViewModel: FilterViewModel,
                        private val notifyChange: () -> Unit,
                        private val isChildAdapter: Boolean = false,
                        private val folderName: String,
@@ -35,7 +36,7 @@ class RssFilterAdapter(var rssFeedList: List<String>,
     }
     init {
         rssFeedList.forEach { url ->
-            RssFeedStateManager.setRssFeedState(url, rssFeedStorage.isRssFeedEnabled(url))
+            RssFeedStateManager.setRssFeedState(url, filterViewModel.isRssFeedEnabled(url))
         }
         Log.d("CHECKEDSTATES", RssFeedStateManager.getCheckedStates().toString())
     }
@@ -45,7 +46,7 @@ class RssFilterAdapter(var rssFeedList: List<String>,
 
     private fun fetchFilterData(url: String, holder: ViewHolder) {
 
-        val rssFilterItem = rssFeedStorage.getFilterItem(url)
+        val rssFilterItem = filterViewModel.getFilterItem(url)
         if(rssFilterItem != null) {
             holder.titleTextView.text = rssFilterItem.header
             holder.descriptionTextView.text = url
@@ -72,7 +73,7 @@ class RssFilterAdapter(var rssFeedList: List<String>,
                             Glide.with(holder.itemView.context)
                                 .load(iconUrl)
                                 .into(holder.imageView)
-                            rssFeedStorage.addFilterItem(rssFilterItemToAdd)
+                            filterViewModel.addFilterItem(rssFilterItemToAdd)
                         }
                     }
                 }
@@ -121,7 +122,6 @@ class RssFilterAdapter(var rssFeedList: List<String>,
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_view_filter_item, parent, false)
-        rssFeedStorage = RssFeedStorage(parent.context.applicationContext as Application)
         return ViewHolder(view)
     }
 
@@ -135,7 +135,7 @@ class RssFilterAdapter(var rssFeedList: List<String>,
 
         holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
             RssFeedStateManager.setRssFeedState(rssFeedUrl, isChecked)
-            rssFeedStorage.setRssFeedState(rssFeedUrl, isChecked)
+            filterViewModel.setRssFeedState(rssFeedUrl, isChecked)
             sharedViewModel.notifyRssFeedChanged()
         }
         if (!isChildAdapter) {
@@ -158,10 +158,10 @@ class RssFilterAdapter(var rssFeedList: List<String>,
         updatedList.removeAt(position)
         rssFeedList = updatedList
         notifyItemRemoved(position)
-        rssFeedStorage.removeRssFeedUrl(url)
-        rssFeedStorage.removeRssInFolders(url)
-        val map = rssFeedStorage.getFoldersMap()
+        filterViewModel.removeRssFeedUrl(url)
+        filterViewModel.removeRssInFolders(url)
+        val map = filterViewModel.getFoldersMap()
         onItemRemovedListener?.onItemRemoved(map)
-        rssFeedStorage.removeFilterItem(url)
+        filterViewModel.removeFilterItem(url)
     }
 }

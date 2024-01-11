@@ -1,10 +1,13 @@
 package com.example.unifiednews.ui.feed
 
+import android.app.Application
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.unifiednews.data.RssFeedItem
+import com.example.unifiednews.repository.RssFeedStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.lang.Integer.min
@@ -13,9 +16,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class FeedViewModel : ViewModel() {
+class FeedViewModel (application: Application) : AndroidViewModel(application) {
     private val _rssFeedItems = MutableLiveData<List<RssFeedItem>>()
     val rssFeedItems: LiveData<List<RssFeedItem>> = _rssFeedItems
+    private val rssFeedStorage = RssFeedStorage(application)
 
     private val loadedUrls = mutableSetOf<String>()
     private var completedRssFetches = 0
@@ -93,5 +97,39 @@ class FeedViewModel : ViewModel() {
     fun refreshFeed() {
         loadedUrls.clear()
         _rssFeedItems.value = emptyList()
+    }
+    fun getRssFeedUrls(): List<String> {
+        return rssFeedStorage.getRssFeedUrls()
+    }
+    fun isRssFeedEnabled(url: String): Boolean {
+        return rssFeedStorage.isRssFeedEnabled(url)
+    }
+
+    fun getIcon(url: String): String? {
+        return rssFeedStorage.getIcon(url)
+    }
+
+    fun setIcon(url: String, it: String) {
+        rssFeedStorage.setIcon(url, it)
+    }
+
+    fun setLastUpdate(format: String) {
+        rssFeedStorage.setLastUpdate(format)
+    }
+
+    fun getLastUpdate(): String? {
+        return rssFeedStorage.getLastUpdate()
+    }
+
+    fun isBookmarked(it1: String, it: String): Boolean {
+        return rssFeedStorage.isBookmarked(it1, it)
+    }
+
+    fun addBookmarkItem(item: RssFeedItem) {
+        return rssFeedStorage.addBookmarkItem(item)
+    }
+
+    fun removeBookmarkItem(item: RssFeedItem) {
+        rssFeedStorage.removeBookmarkItem(item)
     }
 }

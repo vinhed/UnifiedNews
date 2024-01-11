@@ -22,13 +22,14 @@ import com.example.unifiednews.data.RssFilterItem
 import com.example.unifiednews.managers.RssFeedStateManager
 import com.example.unifiednews.repository.RssFeedStorage
 import com.example.unifiednews.ui.feed.SharedViewModel
+import com.example.unifiednews.ui.filter.FilterViewModel
 import kotlin.math.log
 
 class CustomExpandableListAdapter(
     private val context: Context,
     private var folderList: Set<String>,
     private var rssFeedsMap: Map<String, List<String>>,
-    private var rssFeedStorage: RssFeedStorage,
+    private var filterViewModel: FilterViewModel,
     private val sharedViewModel: SharedViewModel,
 
 ) : BaseExpandableListAdapter(), RssFilterAdapter.OnItemRemovedListener {
@@ -65,14 +66,14 @@ class CustomExpandableListAdapter(
         folderSwitch.isFocusable = false
         folderSwitch.isClickable = true
 
-        folderSwitch.isChecked = rssFeedStorage.getFolderSwitchBool(folderName)
+        folderSwitch.isChecked = filterViewModel.getFolderSwitchBool(folderName)
         folderSwitch.setOnClickListener {
             val list = rssFeedsMap[folderName]
             if (list != null) {
                 for (str in list) {
                     RssFeedStateManager.setRssFeedState(str, folderSwitch.isChecked)
-                    rssFeedStorage.setRssFeedState(str, folderSwitch.isChecked)
-                    rssFeedStorage.setSwitchBoolToFolder(folderName, folderSwitch.isChecked)
+                    filterViewModel.setRssFeedState(str, folderSwitch.isChecked)
+                    filterViewModel.setSwitchBoolToFolder(folderName, folderSwitch.isChecked)
                     sharedViewModel.notifyRssFeedChanged()
                 }
             }
@@ -110,7 +111,7 @@ class CustomExpandableListAdapter(
         convertView: View?,
         parent: ViewGroup?
     ): View {
-        val item = rssFeedStorage.getFilterItem(getChild(groupPosition, childPosition) as String)
+        val item = filterViewModel.getFilterItem(getChild(groupPosition, childPosition) as String)
         val layoutInflater =
             context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val view = layoutInflater.inflate(R.layout.recycler_view_filter_item, null)
@@ -128,11 +129,11 @@ class CustomExpandableListAdapter(
         removeButton.setOnClickListener {
             onChildMoreButtonClicked?.invoke(item?.link, childPosition, folderName)
 
-            updateFolders(rssFeedStorage.getFoldersMap())
+            updateFolders(filterViewModel.getFoldersMap())
         }
         checkBox.setOnClickListener {
             RssFeedStateManager.setRssFeedState(description.text as String, checkBox.isChecked)
-            rssFeedStorage.setRssFeedState(description.text as String, checkBox.isChecked)
+            filterViewModel.setRssFeedState(description.text as String, checkBox.isChecked)
             sharedViewModel.notifyRssFeedChanged()
         }
 

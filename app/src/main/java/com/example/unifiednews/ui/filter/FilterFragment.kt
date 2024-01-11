@@ -23,7 +23,7 @@ import com.example.unifiednews.R
 import com.example.unifiednews.adapters.CustomExpandableListAdapter
 import com.example.unifiednews.adapters.RssFilterAdapter
 import com.example.unifiednews.databinding.FragmentFilterBinding
-import com.example.unifiednews.repository.RssFeedStorage
+
 import com.example.unifiednews.ui.feed.SharedViewModel
 
 import java.text.ParsePosition
@@ -35,14 +35,13 @@ class FilterFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var rssFilterAdapter: RssFilterAdapter
-    private lateinit var rssFeedStorage: RssFeedStorage
     private lateinit var sharedViewModel: SharedViewModel
     private lateinit var filterViewModel: FilterViewModel
     private lateinit var expandableListAdapter: CustomExpandableListAdapter
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        rssFeedStorage = RssFeedStorage(context.applicationContext as Application)
+
         sharedViewModel = ViewModelProvider(requireActivity())[SharedViewModel::class.java]
 
     }
@@ -78,7 +77,7 @@ class FilterFragment : Fragment() {
             }
             if (filterViewModel.saveFolder(folderName)) {
                 Toast.makeText(context, "Folder $folderName created", Toast.LENGTH_SHORT).show()
-                val updatedFoldersMap = rssFeedStorage.getFoldersMap()
+                val updatedFoldersMap = filterViewModel.getFoldersMap()
                 expandableListAdapter.updateFolders(updatedFoldersMap)
                 expandableListAdapter.notifyDataSetChanged()
             } else Toast.makeText(context, "Failed to create $folderName ", Toast.LENGTH_SHORT).show()
@@ -87,14 +86,14 @@ class FilterFragment : Fragment() {
         }
         _binding!!.rssFeedBtn.setOnClickListener {
             val url = _binding!!.rssUrlInput.text.toString()
-            if(!rssFeedStorage.getRssFeedUrls().contains(url)) {
+            if(!filterViewModel.getRssFeedUrls().contains(url)) {
                 rssFilterAdapter.isValidRssFeedUrl(url) { isValid ->
                     activity?.runOnUiThread {
                         if (isValid) {
                             Log.d("RssFeed", "Is Valid")
                             _binding!!.rssUrlInput.setText("")
-                            rssFeedStorage.saveRssFeedUrl(url)
-                            updateRssFeedList(rssFeedStorage.getRssFeedUrls())
+                            filterViewModel.saveRssFeedUrl(url)
+                            updateRssFeedList(filterViewModel.getRssFeedUrls())
                             Toast.makeText(context, "URL saved successfully", Toast.LENGTH_SHORT).show()
                         } else {
                             setInvalidColors()
@@ -112,10 +111,10 @@ class FilterFragment : Fragment() {
     }
     private fun setupExpandableListView() {
         val expandableListView = binding.root.findViewById<ExpandableListView>(R.id.expandableListView)
-        val foldersMap = rssFeedStorage.getFoldersMap()
+        val foldersMap = filterViewModel.getFoldersMap()
 
 
-        expandableListAdapter = CustomExpandableListAdapter(requireContext(), foldersMap.keys, foldersMap, rssFeedStorage, sharedViewModel)
+        expandableListAdapter = CustomExpandableListAdapter(requireContext(), foldersMap.keys, foldersMap, filterViewModel, sharedViewModel)
         expandableListAdapter.onChildMoreButtonClicked = { url, position, folderName ->
             val context = _binding?.root?.context
             if (context != null) {
@@ -146,7 +145,7 @@ class FilterFragment : Fragment() {
     private fun deleteFolder(folderName: String) {
 
         if (filterViewModel.removeFolder(folderName))Toast.makeText(context, "Success in deleting $folderName", Toast.LENGTH_SHORT).show()
-        val updatedFoldersMap = rssFeedStorage.getFoldersMap()
+        val updatedFoldersMap = filterViewModel.getFoldersMap()
         Log.d("UPDATEDFOLDERS", updatedFoldersMap.toString())
         expandableListAdapter.updateFolders(updatedFoldersMap)
         expandableListAdapter.notifyDataSetChanged()
@@ -169,12 +168,12 @@ class FilterFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        rssFilterAdapter = RssFilterAdapter(rssFeedStorage.getRssFeedUrls(), rssFeedStorage, { sharedViewModel.notifyRssFeedChanged()}, false, "", sharedViewModel).apply {
+        rssFilterAdapter = RssFilterAdapter(filterViewModel.getRssFeedUrls(), filterViewModel, { sharedViewModel.notifyRssFeedChanged()}, false, "", sharedViewModel).apply {
             onMoreButtonClicked = { url, position ->
                 Log.d("CONTEXT", "CUM")
                 val context = _binding?.root?.context
                 if (context != null) {
-                    val folders = rssFeedStorage.getFolders()
+                    val folders = filterViewModel.getFolders()
                     Log.d("FOLDERSMAP", folders.toString())
 
                     val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, folders)
@@ -204,8 +203,8 @@ class FilterFragment : Fragment() {
 
             } else {
                 val selectedItem = _binding!!.spinner.selectedItem
-                filterViewModel.addToFolder(url, selectedItem.toString())
-                val map = rssFeedStorage.getFoldersMap()
+                filterViewModel.addUrlToFolder(url, selectedItem.toString())
+                val map = filterViewModel.getFoldersMap()
                 expandableListAdapter.updateFolders(map)
             }
             _binding!!.moreModal.visibility = View.INVISIBLE
